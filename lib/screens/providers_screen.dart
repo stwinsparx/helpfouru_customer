@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -16,7 +17,13 @@ class ProvidersScreen extends StatefulWidget {
 
 class _ProvidersScreenState extends State<ProvidersScreen> {
   static const _filters = ['Recommended', 'Nearest', 'Top Rated', 'Price'];
-  static const _railEmoji = ['❄', '🛠', '⚙', '✨', '🔌'];
+  static const _railIcons = <FaIconData>[
+    FontAwesomeIcons.snowflake,
+    FontAwesomeIcons.screwdriverWrench,
+    FontAwesomeIcons.gear,
+    FontAwesomeIcons.wandMagicSparkles,
+    FontAwesomeIcons.plug,
+  ];
   int _filter = 0;
 
   static const _results = <(String, String, String, String, String)>[
@@ -43,12 +50,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               height: double.infinity,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                border:
-                    Border(right: BorderSide(color: AppColors.line)),
+                border: Border(right: BorderSide(color: AppColors.line)),
               ),
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(
-                    vertical: 12, horizontal: 7),
+                  vertical: 12,
+                  horizontal: 7,
+                ),
                 itemCount: subs.length,
                 itemBuilder: (_, i) {
                   final label = subs[i];
@@ -58,16 +66,22 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 6),
                       padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 4),
+                        vertical: 10,
+                        horizontal: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color:
-                            active ? AppColors.mint : Colors.transparent,
+                        color: active ? AppColors.mint : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
                         children: [
-                          Text(_railEmoji[i % _railEmoji.length],
-                              style: const TextStyle(fontSize: 18)),
+                          FaIcon(
+                            _railIcons[i % _railIcons.length],
+                            size: 16,
+                            color: active
+                                ? AppColors.greenDark
+                                : const Color(0xFF68798D),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             label,
@@ -124,11 +138,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                       distance: r.$5,
                       onViewProfile: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (_) => const ProviderProfileScreen()),
+                          builder: (_) => const ProviderProfileScreen(),
+                        ),
                       ),
                       onBook: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (_) => const BookingScreen()),
+                          builder: (_) => const BookingScreen(),
+                        ),
                       ),
                     ),
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'booking_screen.dart';
@@ -69,12 +70,41 @@ class ProviderProfileScreen extends StatelessWidget {
                 const Text(
                   'Rajesh Kumar',
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                const Pill(label: '✓ VERIFIED', fontSize: 9),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.mint,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FaIcon(
+                        FontAwesomeIcons.circleCheck,
+                        size: 9,
+                        color: AppColors.greenDark,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'VERIFIED',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.greenDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 5),
@@ -100,14 +130,18 @@ class ProviderProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('About Provider',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(
+                    'About Provider',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  ),
                   SizedBox(height: 8),
                   Text(
                     'Certified technician for split/window AC service, installation, repair and gas refill. Background verified by HelpFourU.',
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.muted, height: 1.55),
+                      fontSize: 12,
+                      color: AppColors.muted,
+                      height: 1.55,
+                    ),
                   ),
                 ],
               ),
@@ -118,16 +152,18 @@ class ProviderProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Services & Pricing',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(
+                    'Services & Pricing',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  ),
                   SizedBox(height: 4),
                   DetailRow(label: 'AC Service', value: '₹499'),
                   DetailRow(label: 'Deep Cleaning', value: '₹899'),
                   DetailRow(
-                      label: 'Gas Refill',
-                      value: '₹1,799',
-                      showDivider: false),
+                    label: 'Gas Refill',
+                    value: '₹1,799',
+                    showDivider: false,
+                  ),
                 ],
               ),
             ),
@@ -135,9 +171,9 @@ class ProviderProfileScreen extends StatelessWidget {
 
             PrimaryButton(
               label: 'Book Rajesh Kumar',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BookingScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const BookingScreen())),
             ),
           ],
         ),
@@ -163,13 +199,15 @@ class _Stat extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w800)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10.5, color: AppColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+            ),
           ],
         ),
       ),

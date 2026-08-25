@@ -52,20 +52,31 @@ class BookingScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(state.sub,
-                            style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800)),
+                        Text(
+                          state.sub,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        const Text('Rajesh Kumar · Verified Pro',
-                            style: TextStyle(
-                                fontSize: 12, color: AppColors.muted)),
+                        const Text(
+                          'Rajesh Kumar · Verified Pro',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  Text('₹${state.amount}',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w900)),
+                  Text(
+                    '₹${state.amount}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -75,9 +86,10 @@ class BookingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Recommended Add-ons',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Recommended Add-ons',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 4),
                   ..._addons.map((addon) {
                     final added = state.hasAddon(addon.name);
@@ -88,28 +100,29 @@ class BookingScreen extends StatelessWidget {
                         border: isLast
                             ? null
                             : const Border(
-                                bottom: BorderSide(
-                                    color: Color(0xFFEDF1F4))),
+                                bottom: BorderSide(color: Color(0xFFEDF1F4)),
+                              ),
                       ),
                       child: Row(
                         children: [
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: const TextStyle(
-                                    color: AppColors.ink),
+                                style: const TextStyle(color: AppColors.ink),
                                 children: [
                                   TextSpan(
                                     text: addon.name,
                                     style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                   TextSpan(
                                     text: '  ·  ₹${addon.price}',
                                     style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.muted),
+                                      fontSize: 12,
+                                      color: AppColors.muted,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -119,13 +132,14 @@ class BookingScreen extends StatelessWidget {
                             onTap: () => state.toggleAddon(addon),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 11, vertical: 7),
+                                horizontal: 11,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: added
                                     ? AppColors.greenDark
-                                    : const Color(0xFFE8F8F1),
-                                border: Border.all(
-                                    color: AppColors.mintBorder),
+                                    : const Color(0xFFE6F7EF),
+                                border: Border.all(color: AppColors.mintBorder),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -153,9 +167,10 @@ class BookingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Select Booking Slot',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Select Booking Slot',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 10),
                   GridView.builder(
                     shrinkWrap: true,
@@ -163,26 +178,25 @@ class BookingScreen extends StatelessWidget {
                     itemCount: _slots.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 2.6,
-                    ),
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 2.6,
+                        ),
                     itemBuilder: (_, i) {
                       final slot = _slots[i];
                       final selected = state.slot.startsWith(slot);
                       return GestureDetector(
                         onTap: () => state.selectSlot(
-                            '$slot - ${_slotEnd[slot] ?? '11:00 AM'}'),
+                          '$slot - ${_slotEnd[slot] ?? '11:00 AM'}',
+                        ),
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: selected
-                                ? AppColors.mint
-                                : Colors.white,
+                            color: selected ? AppColors.mint : Colors.white,
                             border: Border.all(
                               color: selected
-                                  ? const Color(0xFFBDE8D7)
+                                  ? const Color(0xFFC5EBD8)
                                   : AppColors.line,
                             ),
                             borderRadius: BorderRadius.circular(9),
@@ -213,9 +227,10 @@ class BookingScreen extends StatelessWidget {
                 children: [
                   DetailRow(label: 'Service', value: '₹${state.amount}'),
                   DetailRow(
-                      label: 'Add-ons',
-                      value: '₹${state.addonsTotal}',
-                      showDivider: false),
+                    label: 'Add-ons',
+                    value: '₹${state.addonsTotal}',
+                    showDivider: false,
+                  ),
                   TotalRow(label: 'Total', value: '₹${state.subtotal}'),
                 ],
               ),
@@ -224,9 +239,9 @@ class BookingScreen extends StatelessWidget {
 
             PrimaryButton(
               label: 'Proceed to Payment · ₹${state.subtotal}',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PaymentScreen()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const PaymentScreen())),
             ),
           ],
         ),

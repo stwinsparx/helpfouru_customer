@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
 
-/// Palette lifted from the HelpFourU web prototype (`css/style.css` :root).
+/// HelpFourU design-system palette.
+///
+/// `green` + `blue` pair as the signature gradient used across hero
+/// surfaces, primary CTAs and avatars.
 class AppColors {
-  static const green = Color(0xFF08A66C);
-  static const greenDark = Color(0xFF087E70);
-  static const blue = Color(0xFF24518F);
-  static const blueDark = Color(0xFF173E73);
+  static const green = Color(0xFF0BA360);
+  static const greenDark = Color(0xFF08794A);
+  static const blue = Color(0xFF2563EB);
+  static const blueDark = Color(0xFF1D4ED8);
   static const ink = Color(0xFF12243B);
   static const muted = Color(0xFF708096);
+
+  // Semantic tokens for statuses, badges and promotional surfaces.
+  static const success = Color(0xFF10B981);
+  static const purple = Color(0xFF7C3AED);
   static const bg = Color(0xFFEEF3F7);
   static const card = Color(0xFFFFFFFF);
   static const line = Color(0xFFE2E8EF);
   static const danger = Color(0xFFEF5B68);
-  static const warning = Color(0xFFF6A73A);
+  static const warning = Color(0xFFF59E0B);
 
   // Tints used repeatedly across the prototype.
-  static const mint = Color(0xFFE7F8F1);
-  static const mintBorder = Color(0xFFCCEEE0);
-  static const iceBlue = Color(0xFFEDF4FB);
+  static const mint = Color(0xFFE6F7EF);
+  static const mintBorder = Color(0xFFC5EBD8);
+  static const iceBlue = Color(0xFFEAF1FE);
   static const screenBg = Color(0xFFF6F9FB);
   static const homeBg = Color(0xFFF5F8FB);
   static const authBg = Color(0xFFF8FBFD);
@@ -61,6 +68,12 @@ class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [AppColors.green, AppColors.blue],
+  );
+
+  static const purpleBlue = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.purple, AppColors.blueDark],
   );
 
   static const providerAvatar = LinearGradient(

@@ -106,7 +106,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     : AppColors.line,
                               ),
                               color: _method == i
-                                  ? const Color(0xFFF6FDFA)
+                                  ? const Color(0xFFF5FCF8)
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(11),
                             ),

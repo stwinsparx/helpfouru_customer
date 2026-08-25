@@ -1,4 +1,4 @@
-package com.example.helpfouru_customer
+package com.helpfouru_customer
 
 import io.flutter.embedding.android.FlutterActivity
 

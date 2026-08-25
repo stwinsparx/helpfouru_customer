@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 
 /// Full-width gradient CTA — the prototype's `.primary`.
@@ -17,7 +18,7 @@ class PrimaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x2E08A66C),
+              color: Color(0x2E0BA360),
               blurRadius: 20,
               offset: Offset(0, 9),
             ),
@@ -107,7 +108,12 @@ class AppCard extends StatelessWidget {
 
 /// Back-chevron + title row — the prototype's `.mini-head`.
 class MiniHeader extends StatelessWidget {
-  const MiniHeader({super.key, required this.title, this.subtitle, this.onBack});
+  const MiniHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onBack,
+  });
   final String title;
   final String? subtitle;
   final VoidCallback? onBack;
@@ -127,12 +133,16 @@ class MiniHeader extends StatelessWidget {
               child: Container(
                 width: 34,
                 height: 34,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColors.line),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.chevron_left,
-                    size: 22, color: AppColors.ink),
+                child: const FaIcon(
+                  FontAwesomeIcons.chevronLeft,
+                  size: 13,
+                  color: AppColors.ink,
+                ),
               ),
             ),
           ),
@@ -155,7 +165,9 @@ class MiniHeader extends StatelessWidget {
                     child: Text(
                       subtitle!,
                       style: const TextStyle(
-                          fontSize: 11, color: AppColors.muted),
+                        fontSize: 11,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ),
               ],
@@ -312,13 +324,18 @@ class DetailRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(fontSize: 12, color: AppColors.muted)),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppColors.ink,
+            ),
+          ),
         ],
       ),
     );
@@ -338,12 +355,14 @@ class TotalRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w800)),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w900)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+          ),
         ],
       ),
     );
@@ -364,19 +383,14 @@ void showAppToast(BuildContext context, String message) {
       behavior: SnackBarBehavior.floating,
       duration: const Duration(milliseconds: 2600),
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   );
 }
 
 /// Labelled input matching the prototype's `.field`.
 class LabeledField extends StatelessWidget {
-  const LabeledField({
-    super.key,
-    required this.label,
-    required this.child,
-  });
+  const LabeledField({super.key, required this.label, required this.child});
   final String label;
   final Widget child;
 
@@ -405,22 +419,21 @@ class LabeledField extends StatelessWidget {
 }
 
 InputDecoration appInputDecoration(String hint) => InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFFA3AFBD), fontSize: 14),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDCE5ED)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDCE5ED)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.green, width: 1.4),
-      ),
-    );
+  hintText: hint,
+  hintStyle: const TextStyle(color: Color(0xFFA3AFBD), fontSize: 14),
+  filled: true,
+  fillColor: Colors.white,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: const BorderSide(color: Color(0xFFDCE5ED)),
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: const BorderSide(color: Color(0xFFDCE5ED)),
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: const BorderSide(color: AppColors.green, width: 1.4),
+  ),
+);

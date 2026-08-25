@@ -17,15 +17,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const _pages = <(String, String)>[
     (
       'Find trusted experts',
-      'Book verified local professionals for home, personal and utility services.'
+      'Book verified local professionals for home, personal and utility services.',
     ),
     (
       'Choose your way',
-      'Compare providers, view ratings, choose add-ons and select a convenient slot.'
+      'Compare providers, view ratings, choose add-ons and select a convenient slot.',
     ),
     (
       'Book with confidence',
-      'Pay securely, track the job live and manage every order from one place.'
+      'Pay securely, track the job live and manage every order from one place.',
     ),
   ];
 
@@ -35,9 +35,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _goToLogin() => Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+  void _goToLogin() => Navigator.of(
+    context,
+  ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
 
   void _next() {
     if (_index < _pages.length - 1) {
@@ -63,8 +63,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.only(top: 18, bottom: 6),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.asset('assets/logo.png',
-                      width: 52, height: 52, fit: BoxFit.cover),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               Expanded(
@@ -72,10 +76,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   controller: _controller,
                   itemCount: _pages.length,
                   onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (_, i) => _OnboardPage(
-                    title: _pages[i].$1,
-                    body: _pages[i].$2,
-                  ),
+                  itemBuilder: (_, i) =>
+                      _OnboardPage(title: _pages[i].$1, body: _pages[i].$2),
                 ),
               ),
               Row(
@@ -159,21 +161,17 @@ class _OnboardPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(35),
               child: Stack(
                 children: [
-                  Positioned(
-                    right: -70,
-                    top: -50,
-                    child: _Blob(size: 180),
-                  ),
-                  Positioned(
-                    left: -45,
-                    bottom: -35,
-                    child: _Blob(size: 120),
-                  ),
+                  Positioned(right: -70, top: -50, child: _Blob(size: 180)),
+                  Positioned(left: -45, bottom: -35, child: _Blob(size: 120)),
                   Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(30),
-                      child: Image.asset('assets/logo.png',
-                          width: 112, height: 112, fit: BoxFit.cover),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 112,
+                        height: 112,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -35,14 +36,21 @@ class TrackingScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Order #HFU10284',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800)),
+                        const Text(
+                          'Order #HFU10284',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text('${state.sub} · Rajesh Kumar',
-                            style: const TextStyle(
-                                fontSize: 12, color: AppColors.muted)),
+                        Text(
+                          '${state.sub} · Rajesh Kumar',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -63,38 +71,51 @@ class TrackingScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Rajesh Kumar is on the way',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800)),
+                        Text(
+                          'Rajesh Kumar is on the way',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         SizedBox(height: 4),
-                        Text('ETA 12–18 min · 1.2 km away',
-                            style: TextStyle(
-                                fontSize: 11.5, color: AppColors.muted)),
+                        Text(
+                          'ETA 12–18 min · 1.2 km away',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   GestureDetector(
-                    onTap: () =>
-                        showAppToast(context, 'Calling provider...'),
+                    onTap: () => showAppToast(context, 'Calling provider...'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F8F1),
+                        color: const Color(0xFFE6F7EF),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.call_rounded,
-                              size: 14, color: AppColors.greenDark),
+                          FaIcon(
+                            FontAwesomeIcons.phone,
+                            size: 12,
+                            color: AppColors.greenDark,
+                          ),
                           SizedBox(width: 5),
-                          Text('Call',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.greenDark,
-                              )),
+                          Text(
+                            'Call',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.greenDark,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -179,8 +200,11 @@ class _MapArt extends StatelessWidget {
               top: 62,
               child: Align(
                 alignment: Alignment(0.32, 0),
-                child: Icon(Icons.location_on,
-                    size: 40, color: AppColors.green),
+                child: FaIcon(
+                  FontAwesomeIcons.locationDot,
+                  size: 34,
+                  color: AppColors.green,
+                ),
               ),
             ),
           ],
@@ -219,22 +243,21 @@ class _TimelineStep extends StatelessWidget {
                 height: 26,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: active
-                      ? AppColors.mint
-                      : const Color(0xFFDCE5EC),
+                  color: active ? AppColors.mint : const Color(0xFFDCE5EC),
                   shape: BoxShape.circle,
                 ),
                 child: kind == 0
-                    ? const Icon(Icons.check,
-                        size: 14, color: AppColors.greenDark)
+                    ? const FaIcon(
+                        FontAwesomeIcons.check,
+                        size: 11,
+                        color: AppColors.greenDark,
+                      )
                     : Text(
                         '${index + 1}',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
-                          color: active
-                              ? AppColors.greenDark
-                              : AppColors.muted,
+                          color: active ? AppColors.greenDark : AppColors.muted,
                         ),
                       ),
               ),
@@ -256,15 +279,22 @@ class _TimelineStep extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
+                  ),
                   const SizedBox(height: 3),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.muted)),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.muted,
+                    ),
+                  ),
                 ],
               ),
             ),

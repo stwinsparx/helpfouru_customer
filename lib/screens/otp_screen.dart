@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -12,8 +13,10 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final _controllers =
-      List.generate(4, (i) => TextEditingController(text: '${i + 1}'));
+  final _controllers = List.generate(
+    4,
+    (i) => TextEditingController(text: '${i + 1}'),
+  );
   final _nodes = List.generate(4, (_) => FocusNode());
 
   @override
@@ -28,9 +31,9 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _verify() => Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AppShell()),
-        (route) => false,
-      );
+    MaterialPageRoute(builder: (_) => const AppShell()),
+    (route) => false,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +48,12 @@ class _OtpScreenState extends State<OtpScreen> {
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: Image.asset('assets/logo.png',
-                      width: 64, height: 64, fit: BoxFit.cover),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 18),
@@ -54,9 +61,10 @@ class _OtpScreenState extends State<OtpScreen> {
                 'Verify your mobile',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -78,7 +86,9 @@ class _OtpScreenState extends State<OtpScreen> {
                     RichText(
                       text: const TextSpan(
                         style: TextStyle(
-                            fontSize: 12.5, color: AppColors.greenDark),
+                          fontSize: 12.5,
+                          color: AppColors.greenDark,
+                        ),
                         children: [
                           TextSpan(text: '✓  OTP sent successfully to '),
                           TextSpan(
@@ -91,8 +101,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     const SizedBox(height: 5),
                     const Text(
                       'For your security, never share this code with anyone.',
-                      style:
-                          TextStyle(fontSize: 11, color: Color(0xFF4E6B63)),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF4A6B5C)),
                     ),
                   ],
                 ),
@@ -101,9 +110,10 @@ class _OtpScreenState extends State<OtpScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Wrong number? ',
-                      style:
-                          TextStyle(fontSize: 12, color: AppColors.muted)),
+                  const Text(
+                    'Wrong number? ',
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
                     child: const Text(
@@ -130,12 +140,15 @@ class _OtpScreenState extends State<OtpScreen> {
                         keyboardType: TextInputType.number,
                         maxLength: 1,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly
+                          FilteringTextInputFormatter.digitsOnly,
                         ],
                         style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w800),
-                        decoration:
-                            appInputDecoration('').copyWith(counterText: ''),
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        decoration: appInputDecoration(
+                          '',
+                        ).copyWith(counterText: ''),
                         onChanged: (v) {
                           if (v.isNotEmpty && i < 3) {
                             _nodes[i + 1].requestFocus();
@@ -152,9 +165,10 @@ class _OtpScreenState extends State<OtpScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Didn't receive it? ",
-                      style:
-                          TextStyle(fontSize: 12, color: AppColors.muted)),
+                  const Text(
+                    "Didn't receive it? ",
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                  ),
                   GestureDetector(
                     onTap: () =>
                         showAppToast(context, 'A new OTP has been sent'),
@@ -182,9 +196,18 @@ class _OtpScreenState extends State<OtpScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _TrustItem(icon: '🔒', label: 'Secure Login'),
-                    _TrustItem(icon: '✓', label: 'Verified Account'),
-                    _TrustItem(icon: '24/7', label: 'Support'),
+                    _TrustItem(
+                      icon: FontAwesomeIcons.lock,
+                      label: 'Secure Login',
+                    ),
+                    _TrustItem(
+                      icon: FontAwesomeIcons.circleCheck,
+                      label: 'Verified Account',
+                    ),
+                    _TrustItem(
+                      icon: FontAwesomeIcons.headset,
+                      label: 'Support',
+                    ),
                   ],
                 ),
               ),
@@ -198,21 +221,19 @@ class _OtpScreenState extends State<OtpScreen> {
 
 class _TrustItem extends StatelessWidget {
   const _TrustItem({required this.icon, required this.label});
-  final String icon;
+  final FaIconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(icon,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: AppColors.greenDark)),
+        FaIcon(icon, size: 15, color: AppColors.greenDark),
         const SizedBox(height: 4),
-        Text(label,
-            style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+        ),
       ],
     );
   }

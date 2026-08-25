@@ -51,22 +51,22 @@ class AppState extends ChangeNotifier {
 
   /// Sub-services shown on the left rail of the providers screen.
   List<String> get subServices => switch (category) {
-        'AC Repair' => const [
-            'AC Service',
-            'AC Installation',
-            'Gas Refill',
-            'AC Cleaning',
-            'AC Repair',
-          ],
-        'Electrician' => const [
-            'Wiring & Installation',
-            'Switch & Socket',
-            'Fan Repair',
-            'Lighting',
-            'MCB Repair',
-          ],
-        _ => const ['General Service', 'Repair', 'Installation', 'Maintenance'],
-      };
+    'AC Repair' => const [
+      'AC Service',
+      'AC Installation',
+      'Gas Refill',
+      'AC Cleaning',
+      'AC Repair',
+    ],
+    'Electrician' => const [
+      'Wiring & Installation',
+      'Switch & Socket',
+      'Fan Repair',
+      'Lighting',
+      'MCB Repair',
+    ],
+    _ => const ['General Service', 'Repair', 'Installation', 'Maintenance'],
+  };
 }
 
 /// Simple InheritedNotifier so screens can read state without extra packages.
@@ -78,8 +78,7 @@ class AppStateScope extends InheritedNotifier<AppState> {
   }) : super(notifier: state);
 
   static AppState of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<AppStateScope>();
+    final scope = context.dependOnInheritedWidgetOfExactType<AppStateScope>();
     assert(scope != null, 'AppStateScope not found in widget tree');
     return scope!.notifier!;
   }

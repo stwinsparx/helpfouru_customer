@@ -28,11 +28,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
           children: [
             const Padding(
               padding: EdgeInsets.only(bottom: 4),
-              child: Text('My Orders',
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink)),
+              child: Text(
+                'My Orders',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             SingleChildScrollView(
@@ -53,18 +56,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
             _OrderCard(
               title: 'AC Service · Rajesh Kumar',
               status: 'CONFIRMED',
-              info: '#HFU10284 · Today, ${state.slot}\nHome · Udaipur · ${state.sub}',
+              info:
+                  '#HFU10284 · Today, ${state.slot}\nHome · Udaipur · ${state.sub}',
               amount: '₹${state.payable}',
               actionLabel: 'Track Order',
-              onAction: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const TrackingScreen()),
-              ),
+              onAction: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const TrackingScreen())),
             ),
             _OrderCard(
               title: 'Electrician · Amit Sharma',
               status: 'COMPLETED',
-              statusBg: AppColors.iceBlue,
-              statusFg: AppColors.blue,
+              statusBg: const Color(0xFFE7F8F1),
+              statusFg: AppColors.success,
               info: '#HFU10121 · 02 Aug 2026\nSwitch & Socket Repair',
               amount: '₹699',
               actionLabel: 'View Invoice',
@@ -73,8 +77,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
             _OrderCard(
               title: 'Home Cleaning · Neha Services',
               status: 'COMPLETED',
-              statusBg: const Color(0xFFFFF2E2),
-              statusFg: const Color(0xFFB66B0A),
+              statusBg: const Color(0xFFFEF3E2),
+              statusFg: AppColors.warning,
               info: '#HFU10087 · 28 Jul 2026\n2BHK Deep Cleaning',
               amount: '₹1,299',
               actionLabel: 'Rate Service',
@@ -119,44 +123,62 @@ class _OrderCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(title,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w800)),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               Pill(
-                  label: status,
-                  background: statusBg,
-                  foreground: statusFg,
-                  fontSize: 9.5),
+                label: status,
+                background: statusBg,
+                foreground: statusFg,
+                fontSize: 9.5,
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(info,
-              style: const TextStyle(
-                  fontSize: 12, color: AppColors.muted, height: 1.5)),
+          Text(
+            info,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.muted,
+              height: 1.5,
+            ),
+          ),
           const SizedBox(height: 11),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(amount,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800)),
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               GestureDetector(
                 onTap: onAction,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 9),
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F8F1),
+                    color: const Color(0xFFE6F7EF),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(actionLabel,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.greenDark,
-                      )),
+                  child: Text(
+                    actionLabel,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.greenDark,
+                    ),
+                  ),
                 ),
               ),
             ],

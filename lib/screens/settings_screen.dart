@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -24,73 +25,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const MiniHeader(title: 'Application Settings'),
 
             const _GroupLabel('Preferences'),
-            _SettingsGroup(children: [
-              _SettingRow(
-                icon: '🌐',
-                title: 'Language',
-                subtitle: 'English',
-                trailing: TextButton(
-                  onPressed: () =>
-                      showAppToast(context, 'Language selector opened'),
-                  child: const Text('Change',
+            _SettingsGroup(
+              children: [
+                _SettingRow(
+                  icon: FontAwesomeIcons.globe,
+                  title: 'Language',
+                  subtitle: 'English',
+                  trailing: TextButton(
+                    onPressed: () =>
+                        showAppToast(context, 'Language selector opened'),
+                    child: const Text(
+                      'Change',
                       style: TextStyle(
                         color: AppColors.blue,
                         fontWeight: FontWeight.w700,
-                      )),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              _SettingRow(
-                icon: '🔔',
-                title: 'Push Notifications',
-                subtitle: 'Booking updates and alerts',
-                trailing: Switch(
-                  value: _push,
-                  activeThumbColor: Colors.white,
-                  activeTrackColor: AppColors.green,
-                  onChanged: (v) => setState(() => _push = v),
+                _SettingRow(
+                  icon: FontAwesomeIcons.bell,
+                  title: 'Push Notifications',
+                  subtitle: 'Booking updates and alerts',
+                  trailing: Switch(
+                    value: _push,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: AppColors.green,
+                    onChanged: (v) => setState(() => _push = v),
+                  ),
                 ),
-              ),
-              _SettingRow(
-                icon: '📣',
-                title: 'Promotional Offers',
-                subtitle: 'Deals and service recommendations',
-                trailing: Switch(
-                  value: _promos,
-                  activeThumbColor: Colors.white,
-                  activeTrackColor: AppColors.green,
-                  onChanged: (v) => setState(() => _promos = v),
+                _SettingRow(
+                  icon: FontAwesomeIcons.bullhorn,
+                  title: 'Promotional Offers',
+                  subtitle: 'Deals and service recommendations',
+                  trailing: Switch(
+                    value: _promos,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: AppColors.green,
+                    onChanged: (v) => setState(() => _promos = v),
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
 
             const _GroupLabel('Security'),
-            const _SettingsGroup(children: [
-              _SettingRow(
-                icon: '🔐',
-                title: 'Login & Security',
-                subtitle: 'OTP and account security',
-              ),
-              _SettingRow(
-                icon: '🧾',
-                title: 'Payment Preferences',
-                subtitle: 'Saved methods and invoices',
-              ),
-            ]),
+            const _SettingsGroup(
+              children: [
+                _SettingRow(
+                  icon: FontAwesomeIcons.lock,
+                  title: 'Login & Security',
+                  subtitle: 'OTP and account security',
+                ),
+                _SettingRow(
+                  icon: FontAwesomeIcons.fileInvoice,
+                  title: 'Payment Preferences',
+                  subtitle: 'Saved methods and invoices',
+                ),
+              ],
+            ),
 
             const _GroupLabel('App'),
-            const _SettingsGroup(children: [
-              _SettingRow(
-                icon: '⭐',
-                title: 'Rate HelpFourU',
-                subtitle: 'Help us improve',
-              ),
-              _SettingRow(
-                icon: 'ℹ',
-                title: 'App Version',
-                subtitle: 'Customer v1.0.0',
-                trailing: SizedBox.shrink(),
-              ),
-            ]),
+            const _SettingsGroup(
+              children: [
+                _SettingRow(
+                  icon: FontAwesomeIcons.solidStar,
+                  title: 'Rate HelpFourU',
+                  subtitle: 'Help us improve',
+                ),
+                _SettingRow(
+                  icon: FontAwesomeIcons.circleInfo,
+                  title: 'App Version',
+                  subtitle: 'Customer v1.0.0',
+                  trailing: SizedBox.shrink(),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -145,7 +154,7 @@ class _SettingRow extends StatelessWidget {
     this.trailing,
   });
 
-  final String icon;
+  final FaIconData icon;
   final String title;
   final String subtitle;
   final Widget? trailing;
@@ -159,25 +168,33 @@ class _SettingRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 15)),
+          FaIcon(icon, size: 14, color: AppColors.blue),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w800)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.muted)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                ),
               ],
             ),
           ),
           trailing ??
-              const Icon(Icons.chevron_right,
-                  size: 20, color: Color(0xFFA4B0BD)),
+              const FaIcon(
+                FontAwesomeIcons.chevronRight,
+                size: 12,
+                color: Color(0xFFA4B0BD),
+              ),
         ],
       ),
     );

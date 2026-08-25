@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -49,11 +50,14 @@ class _BiddingScreenState extends State<BiddingScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Text('Publish a Bidding Request',
-                style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink)),
+            const Text(
+              'Publish a Bidding Request',
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
+            ),
             const SizedBox(height: 14),
 
             Container(
@@ -65,12 +69,14 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Let providers compete for your job',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      )),
+                  Text(
+                    'Let providers compete for your job',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
                   SizedBox(height: 6),
                   Text(
                     'Describe your requirement, set a preferred budget and receive offers from nearby verified professionals.',
@@ -90,9 +96,10 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Service Category',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Service Category',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -105,8 +112,9 @@ class _BiddingScreenState extends State<BiddingScreen> {
                         value: _category,
                         isExpanded: true,
                         items: _categories
-                            .map((c) => DropdownMenuItem(
-                                value: c, child: Text(c)))
+                            .map(
+                              (c) => DropdownMenuItem(value: c, child: Text(c)),
+                            )
                             .toList(),
                         onChanged: (v) =>
                             setState(() => _category = v ?? _category),
@@ -122,14 +130,16 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('What do you need?',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'What do you need?',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     maxLines: 4,
                     decoration: appInputDecoration(
-                        'Example: Need complete kitchen electrical rewiring...'),
+                      'Example: Need complete kitchen electrical rewiring...',
+                    ),
                   ),
                 ],
               ),
@@ -140,9 +150,10 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Budget & Schedule',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Budget & Schedule',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 10),
                   LabeledField(
                     label: 'EXPECTED BUDGET',
@@ -157,10 +168,12 @@ class _BiddingScreenState extends State<BiddingScreen> {
                       controller: _date,
                       readOnly: true,
                       onTap: _pickDate,
-                      decoration:
-                          appInputDecoration('Select a date').copyWith(
-                        suffixIcon: const Icon(Icons.calendar_today_rounded,
-                            size: 18, color: AppColors.muted),
+                      decoration: appInputDecoration('Select a date').copyWith(
+                        suffixIcon: const FaIcon(
+                          FontAwesomeIcons.calendar,
+                          size: 15,
+                          color: AppColors.muted,
+                        ),
                       ),
                     ),
                   ),
@@ -170,8 +183,10 @@ class _BiddingScreenState extends State<BiddingScreen> {
 
             PrimaryButton(
               label: 'Publish Request',
-              onTap: () => showAppToast(context,
-                  'Bidding request published. Providers can now send offers.'),
+              onTap: () => showAppToast(
+                context,
+                'Bidding request published. Providers can now send offers.',
+              ),
             ),
           ],
         ),

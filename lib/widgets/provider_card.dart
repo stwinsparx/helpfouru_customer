@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 
 /// Reusable listing card — the prototype's `providerCard()`.
@@ -78,21 +79,28 @@ class ProviderCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified,
-                            size: 14, color: AppColors.greenDark),
+                        const FaIcon(
+                          FontAwesomeIcons.circleCheck,
+                          size: 13,
+                          color: AppColors.greenDark,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
                       '★ $rating · $jobs',
                       style: const TextStyle(
-                          fontSize: 11, color: AppColors.star),
+                        fontSize: 11,
+                        color: AppColors.star,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       '$role · $distance away',
                       style: const TextStyle(
-                          fontSize: 11, color: AppColors.muted),
+                        fontSize: 11,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ],
                 ),
@@ -112,10 +120,7 @@ class ProviderCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _CardButton(
-                  label: 'View Profile',
-                  onTap: onViewProfile,
-                ),
+                child: _CardButton(label: 'View Profile', onTap: onViewProfile),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -142,7 +147,7 @@ class _CardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: filled ? const Color(0xFFE8F8F1) : Colors.white,
+      color: filled ? const Color(0xFFE6F7EF) : Colors.white,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,

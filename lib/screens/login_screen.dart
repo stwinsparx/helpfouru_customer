@@ -20,9 +20,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _continue() => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const OtpScreen()),
-      );
+  void _continue() => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const OtpScreen()));
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: Image.asset('assets/logo.png',
-                      width: 64, height: 64, fit: BoxFit.cover),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 18),
@@ -87,8 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextField(
                         controller: _mobile,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            appInputDecoration('Enter mobile number'),
+                        decoration: appInputDecoration('Enter mobile number'),
                       ),
                     ),
                   ],
@@ -102,9 +105,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(color: Color(0xFFE1E7ED))),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('OR',
-                          style: TextStyle(
-                              color: Color(0xFFA0ACB9), fontSize: 11)),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Color(0xFFA0ACB9),
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
                     Expanded(child: Divider(color: Color(0xFFE1E7ED))),
                   ],

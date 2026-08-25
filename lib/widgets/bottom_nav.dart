@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
 
 enum NavTab { home, orders, bid, alerts, profile }
@@ -9,12 +10,12 @@ class AppBottomNav extends StatelessWidget {
   final NavTab active;
   final ValueChanged<NavTab> onSelect;
 
-  static const _items = <(NavTab, IconData, String)>[
-    (NavTab.home, Icons.home_rounded, 'Home'),
-    (NavTab.orders, Icons.receipt_long_rounded, 'Orders'),
-    (NavTab.bid, Icons.gavel_rounded, 'Bid'),
-    (NavTab.alerts, Icons.notifications_rounded, 'Alerts'),
-    (NavTab.profile, Icons.person_rounded, 'Profile'),
+  static const _items = <(NavTab, FaIconData, String)>[
+    (NavTab.home, FontAwesomeIcons.house, 'Home'),
+    (NavTab.orders, FontAwesomeIcons.receipt, 'Orders'),
+    (NavTab.bid, FontAwesomeIcons.gavel, 'Bid'),
+    (NavTab.alerts, FontAwesomeIcons.bell, 'Alerts'),
+    (NavTab.profile, FontAwesomeIcons.user, 'Profile'),
   ];
 
   @override
@@ -37,9 +38,9 @@ class AppBottomNav extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      FaIcon(
                         item.$2,
-                        size: 22,
+                        size: 18,
                         color: selected
                             ? AppColors.greenDark
                             : const Color(0xFF8A97A7),

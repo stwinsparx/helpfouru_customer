@@ -1,37 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../core/services/api_service.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/provider_card.dart';
+import '../widgets/promo_carousel.dart';
 import 'providers_screen.dart';
 import 'provider_profile_screen.dart';
 import 'booking_screen.dart';
 import 'tracking_screen.dart';
 import 'shell.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static const _cats = <(String, String)>[
-    ('⚡', 'Electrician'),
-    ('🔧', 'Plumber'),
-    ('❄', 'AC Repair'),
-    ('🧹', 'Cleaning'),
-    ('🪚', 'Carpenter'),
-    ('🎨', 'Painter'),
-    ('🚗', 'Car Wash'),
-    ('💻', 'Appliance'),
-    ('🔑', 'Locksmith'),
-    ('📦', 'Packers'),
-    ('💇', 'Beauty'),
-    ('➕', 'View All'),
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ApiService _apiService = ApiService();
+  Map<String, dynamic>? _homeData;
+  bool _isLoading = true;
+
+  static const _cats = <(FaIconData, String)>[
+    (FontAwesomeIcons.bolt, 'Electrician'),
+    (FontAwesomeIcons.wrench, 'Plumber'),
+    (FontAwesomeIcons.snowflake, 'AC Repair'),
+    (FontAwesomeIcons.broom, 'Cleaning'),
+    (FontAwesomeIcons.hammer, 'Carpenter'),
+    (FontAwesomeIcons.paintRoller, 'Painter'),
+    (FontAwesomeIcons.car, 'Car Wash'),
+    (FontAwesomeIcons.plug, 'Appliance'),
+    (FontAwesomeIcons.key, 'Locksmith'),
+    (FontAwesomeIcons.boxOpen, 'Packers'),
+    (FontAwesomeIcons.scissors, 'Beauty'),
+    (FontAwesomeIcons.ellipsis, 'View All'),
   ];
 
   static const _popular = {'AC Repair', 'Electrician', 'Cleaning', 'Plumber'};
 
-  void _openProviders(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ProvidersScreen()),
-      );
+  @override
+  void initState() {
+    super.initState();
+    _fetchHomeData();
+  }
+
+  Future<void> _fetchHomeData() async {
+    try {
+      final response = await _apiService.get('/customer/home');
+      if (response.statusCode == 200 && response.data['is_success'] == true) {
+        setState(() => _homeData = response.data['data']);
+      }
+    } catch (e) {
+      debugPrint('Home API error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _openProviders(BuildContext context) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const ProvidersScreen()));
 
   @override
   Widget build(BuildContext context) {
@@ -59,12 +90,11 @@ class HomeScreen extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _cats.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
                     mainAxisSpacing: 9,
                     crossAxisSpacing: 9,
-                    childAspectRatio: 0.86,
+                    childAspectRatio: 0.80,
                   ),
                   itemBuilder: (_, i) {
                     final (icon, label) = _cats[i];
@@ -82,6 +112,25 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+
+          // ── Promo banner ────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: PromoCard(
+                slide: PromoSlide(
+                  eyebrow: 'LIMITED TIME OFFER',
+                  title: 'Flat ₹100 off your first booking',
+                  subtitle: 'Use code WELCOME100 at checkout on any service.',
+                  gradient: AppGradients.banner,
+                  icon: FontAwesomeIcons.tags,
+                  onTap: () => _openProviders(context),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
 
           // ── Why customers choose HelpFourU ──────────────────────────
@@ -92,17 +141,18 @@ class HomeScreen extends StatelessWidget {
               children: [
                 SectionHead(title: 'Why customers choose HelpFourU'),
                 _Recommendation(
-                  icon: '✓',
+                  icon: FontAwesomeIcons.circleCheck,
                   title: 'Verified professionals',
-                  body: 'Identity and service experience checks before joining.',
+                  body:
+                      'Identity and service experience checks before joining.',
                 ),
                 _Recommendation(
-                  icon: '★',
+                  icon: FontAwesomeIcons.solidStar,
                   title: 'Real ratings & reviews',
                   body: 'Compare service quality before you book.',
                 ),
                 _Recommendation(
-                  icon: '₹',
+                  icon: FontAwesomeIcons.indianRupeeSign,
                   title: 'Transparent pricing',
                   body: 'See service price, add-ons and total before payment.',
                 ),
@@ -130,7 +180,8 @@ class HomeScreen extends StatelessWidget {
                   distance: '2.1 km',
                   onViewProfile: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (_) => const ProviderProfileScreen()),
+                      builder: (_) => const ProviderProfileScreen(),
+                    ),
                   ),
                   onBook: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const BookingScreen()),
@@ -144,7 +195,8 @@ class HomeScreen extends StatelessWidget {
                   distance: '1.4 km',
                   onViewProfile: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (_) => const ProviderProfileScreen()),
+                      builder: (_) => const ProviderProfileScreen(),
+                    ),
                   ),
                   onBook: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const BookingScreen()),
@@ -197,7 +249,9 @@ class HomeScreen extends StatelessWidget {
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.blueDark,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(9),
@@ -206,7 +260,9 @@ class HomeScreen extends StatelessWidget {
                     child: const Text(
                       'Start Bidding',
                       style: TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w800),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
@@ -217,6 +273,46 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Slide content for the promo carousel under the home search bar.
+List<PromoSlide> _promoSlides(BuildContext context) {
+  return [
+    PromoSlide(
+      eyebrow: 'NEW ON HELPFOURU',
+      title: 'Deep home cleaning\nstarting at ₹499',
+      subtitle: 'Book a verified cleaning expert in under 2 minutes.',
+      gradient: AppGradients.hero,
+      icon: FontAwesomeIcons.broom,
+      onTap: () {
+        AppStateScope.of(context).selectCategory('Cleaning');
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ProvidersScreen()));
+      },
+    ),
+    PromoSlide(
+      eyebrow: 'REFER & EARN',
+      title: 'Give ₹150, get ₹150',
+      subtitle: 'Invite friends to HelpFourU and earn wallet credit.',
+      gradient: AppGradients.purpleBlue,
+      icon: FontAwesomeIcons.gift,
+      onTap: () => showAppToast(context, 'Referral screen opened'),
+    ),
+    PromoSlide(
+      eyebrow: 'AC SEASON SPECIAL',
+      title: 'AC service at flat ₹399',
+      subtitle: 'Beat the heat with our top-rated technicians.',
+      gradient: AppGradients.brand,
+      icon: FontAwesomeIcons.snowflake,
+      onTap: () {
+        AppStateScope.of(context).selectCategory('AC Repair');
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ProvidersScreen()));
+      },
+    ),
+  ];
 }
 
 class _Header extends StatelessWidget {
@@ -243,20 +339,30 @@ class _Header extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Good morning, Shubham 👋',
-                            style: TextStyle(
-                                fontSize: 12, color: AppColors.muted)),
+                        Text(
+                          'Good morning, Shubham',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                          ),
+                        ),
                         SizedBox(height: 2),
-                        Text('How can we help today?',
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                            )),
+                        Text(
+                          'How can we help today?',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
                         SizedBox(height: 3),
-                        Text('⌖ Udaipur, Rajasthan · Home',
-                            style: TextStyle(
-                                fontSize: 11, color: AppColors.muted)),
+                        Text(
+                          '⌖ Udaipur, Rajasthan · Home',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -270,11 +376,14 @@ class _Header extends StatelessWidget {
                         gradient: AppGradients.avatar,
                         shape: BoxShape.circle,
                       ),
-                      child: const Text('SK',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13)),
+                      child: const Text(
+                        'SK',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -283,8 +392,10 @@ class _Header extends StatelessWidget {
 
               // Search bar (visual, matching the prototype's static field).
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 13,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF2F6F9),
                   border: Border.all(color: const Color(0xFFE6EDF3)),
@@ -292,14 +403,20 @@ class _Header extends StatelessWidget {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.search, size: 18, color: Color(0xFF8391A3)),
+                    FaIcon(
+                      FontAwesomeIcons.magnifyingGlass,
+                      size: 14,
+                      color: Color(0xFF8391A3),
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Search services, providers or anything you need',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 12.5, color: Color(0xFF8391A3)),
+                          fontSize: 12.5,
+                          color: Color(0xFF8391A3),
+                        ),
                       ),
                     ),
                   ],
@@ -307,12 +424,15 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
+              // Promo slider.
+              PromoCarousel(slides: _promoSlides(context)),
+              const SizedBox(height: 14),
+
               // Hero card.
               ClipRRect(
                 borderRadius: BorderRadius.circular(18),
                 child: Container(
-                  decoration:
-                      const BoxDecoration(gradient: AppGradients.hero),
+                  decoration: const BoxDecoration(gradient: AppGradients.hero),
                   child: Stack(
                     children: [
                       Positioned(
@@ -361,13 +481,17 @@ class _Header extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 14),
-                            Row(
+                            // Wrap (not Row) so the pair reflows instead of
+                            // overflowing on narrow screens.
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 _HeroButton(
-                                  label: 'Find a Professional →',
+                                  label: 'Find a Professional',
+                                  trailing: FontAwesomeIcons.arrowRight,
                                   onTap: onProviders,
                                 ),
-                                const SizedBox(width: 8),
                                 _HeroButton(
                                   label: 'Post a Job',
                                   ghost: true,
@@ -388,25 +512,24 @@ class _Header extends StatelessWidget {
               Row(
                 children: [
                   _QuickAction(
-                    icon: Icons.receipt_long_rounded,
+                    icon: FontAwesomeIcons.receipt,
                     label: 'My Orders',
                     onTap: () => AppShell.goToTab(context, 1),
                   ),
                   _QuickAction(
-                    icon: Icons.my_location_rounded,
+                    icon: FontAwesomeIcons.locationCrosshairs,
                     label: 'Track Order',
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const TrackingScreen()),
+                      MaterialPageRoute(builder: (_) => const TrackingScreen()),
                     ),
                   ),
                   _QuickAction(
-                    icon: Icons.gavel_rounded,
+                    icon: FontAwesomeIcons.gavel,
                     label: 'Post Bid',
                     onTap: () => AppShell.goToTab(context, 2),
                   ),
                   _QuickAction(
-                    icon: Icons.notifications_rounded,
+                    icon: FontAwesomeIcons.bell,
                     label: 'Alerts',
                     onTap: () => AppShell.goToTab(context, 3),
                   ),
@@ -421,10 +544,16 @@ class _Header extends StatelessWidget {
 }
 
 class _HeroButton extends StatelessWidget {
-  const _HeroButton({required this.label, this.onTap, this.ghost = false});
+  const _HeroButton({
+    required this.label,
+    this.onTap,
+    this.ghost = false,
+    this.trailing,
+  });
   final String label;
   final VoidCallback? onTap;
   final bool ghost;
+  final FaIconData? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -435,21 +564,31 @@ class _HeroButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(9),
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(9),
-            border: ghost
-                ? Border.all(color: const Color(0x33FFFFFF))
-                : null,
+            border: ghost ? Border.all(color: const Color(0x33FFFFFF)) : null,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: ghost ? Colors.white : AppColors.blueDark,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: ghost ? Colors.white : AppColors.blueDark,
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: 6),
+                FaIcon(
+                  trailing,
+                  size: 10,
+                  color: ghost ? Colors.white : AppColors.blueDark,
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -458,12 +597,8 @@ class _HeroButton extends StatelessWidget {
 }
 
 class _QuickAction extends StatelessWidget {
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
-  final IconData icon;
+  const _QuickAction({required this.icon, required this.label, this.onTap});
+  final FaIconData icon;
   final String label;
   final VoidCallback? onTap;
 
@@ -486,7 +621,7 @@ class _QuickAction extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(icon, size: 19, color: AppColors.blueDark),
+                  FaIcon(icon, size: 16, color: AppColors.blueDark),
                   const SizedBox(height: 5),
                   Text(
                     label,
@@ -513,7 +648,7 @@ class _CategoryTile extends StatelessWidget {
     required this.popular,
     this.onTap,
   });
-  final String icon;
+  final FaIconData icon;
   final String label;
   final bool popular;
   final VoidCallback? onTap;
@@ -540,36 +675,43 @@ class _CategoryTile extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.mint,
-                      borderRadius: BorderRadius.circular(11),
+              // Sized to fill the tile so the column centres against the
+              // tile itself, not against its widest child.
+              Positioned.fill(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Top inset leaves room for the "Popular" badge so it
+                    // never crowds the icon on featured tiles.
+                    const SizedBox(height: 10),
+                    Container(
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.mint,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: FaIcon(icon, size: 14, color: AppColors.greenDark),
                     ),
-                    child: Text(icon,
-                        style: const TextStyle(fontSize: 16)),
-                  ),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (popular)
                 Positioned(
@@ -577,7 +719,9 @@ class _CategoryTile extends StatelessWidget {
                   top: 4,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 2),
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.mint,
                       borderRadius: BorderRadius.circular(10),
@@ -606,7 +750,7 @@ class _Recommendation extends StatelessWidget {
     required this.title,
     required this.body,
   });
-  final String icon;
+  final FaIconData icon;
   final String title;
   final String body;
 
@@ -625,29 +769,30 @@ class _Recommendation extends StatelessWidget {
               color: AppColors.iceBlue,
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Text(
-              icon,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: AppColors.blue,
-              ),
-            ),
+            child: FaIcon(icon, size: 17, color: AppColors.blue),
           ),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(body,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.muted, height: 1.35)),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.muted,
+                    height: 1.35,
+                  ),
+                ),
               ],
             ),
           ),

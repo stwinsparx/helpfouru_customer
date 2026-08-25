@@ -1,0 +1,14 @@
+flutter_launcher_icons:
+  image_path: "assets/logo.png"
+
+  android: "ic_launcher"
+  # The generator already insets the foreground by 16% for the system mask,
+  # so feed it the full-bleed mark rather than a pre-padded one.
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/logo.png"
+  min_sdk_android: 21
+
+  ios: true
+  # iOS forbids alpha in app icons; flatten onto white.
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
