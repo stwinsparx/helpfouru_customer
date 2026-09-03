@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
+import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -11,6 +13,8 @@ class BiddingScreen extends StatefulWidget {
 }
 
 class _BiddingScreenState extends State<BiddingScreen> {
+  // Canonical (non-localized) category keys; localized for display via
+  // [localizedServiceName].
   static const _categories = [
     'Electrician',
     'Plumber',
@@ -43,6 +47,7 @@ class _BiddingScreenState extends State<BiddingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       color: AppColors.screenBg,
       child: SafeArea(
@@ -50,9 +55,9 @@ class _BiddingScreenState extends State<BiddingScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Text(
-              'Publish a Bidding Request',
-              style: TextStyle(
+            Text(
+              l10n.publishBiddingRequest,
+              style: const TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
@@ -66,21 +71,21 @@ class _BiddingScreenState extends State<BiddingScreen> {
                 gradient: AppGradients.banner,
                 borderRadius: BorderRadius.circular(17),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Let providers compete for your job',
-                    style: TextStyle(
+                    l10n.letProvidersCompete,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   Text(
-                    'Describe your requirement, set a preferred budget and receive offers from nearby verified professionals.',
-                    style: TextStyle(
+                    l10n.describeRequirementBanner,
+                    style: const TextStyle(
                       fontSize: 12,
                       height: 1.5,
                       color: Color(0xD9FFFFFF),
@@ -96,9 +101,9 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Service Category',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.serviceCategoryLabel,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -113,7 +118,10 @@ class _BiddingScreenState extends State<BiddingScreen> {
                         isExpanded: true,
                         items: _categories
                             .map(
-                              (c) => DropdownMenuItem(value: c, child: Text(c)),
+                              (c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(localizedServiceName(context, c)),
+                              ),
                             )
                             .toList(),
                         onChanged: (v) =>
@@ -130,16 +138,14 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'What do you need?',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.whatDoYouNeed,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     maxLines: 4,
-                    decoration: appInputDecoration(
-                      'Example: Need complete kitchen electrical rewiring...',
-                    ),
+                    decoration: appInputDecoration(l10n.biddingRequirementHint),
                   ),
                 ],
               ),
@@ -150,25 +156,25 @@ class _BiddingScreenState extends State<BiddingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Budget & Schedule',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.budgetAndSchedule,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 10),
                   LabeledField(
-                    label: 'EXPECTED BUDGET',
+                    label: l10n.expectedBudgetLabel,
                     child: TextField(
                       keyboardType: TextInputType.number,
-                      decoration: appInputDecoration('₹ e.g. 2500'),
+                      decoration: appInputDecoration(l10n.expectedBudgetHint),
                     ),
                   ),
                   LabeledField(
-                    label: 'PREFERRED DATE',
+                    label: l10n.preferredDateLabel,
                     child: TextField(
                       controller: _date,
                       readOnly: true,
                       onTap: _pickDate,
-                      decoration: appInputDecoration('Select a date').copyWith(
+                      decoration: appInputDecoration(l10n.selectDateHint).copyWith(
                         suffixIcon: const FaIcon(
                           FontAwesomeIcons.calendar,
                           size: 15,
@@ -182,10 +188,10 @@ class _BiddingScreenState extends State<BiddingScreen> {
             ),
 
             PrimaryButton(
-              label: 'Publish Request',
+              label: l10n.publishRequest,
               onTap: () => showAppToast(
                 context,
-                'Bidding request published. Providers can now send offers.',
+                l10n.biddingPublishedToast,
               ),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// Reusable listing card — the prototype's `providerCard()`.
@@ -11,7 +12,7 @@ class ProviderCard extends StatelessWidget {
     required this.rating,
     required this.price,
     required this.distance,
-    this.jobs = '128 jobs',
+    this.jobs,
     this.onViewProfile,
     this.onBook,
   });
@@ -21,7 +22,9 @@ class ProviderCard extends StatelessWidget {
   final String rating;
   final String price;
   final String distance;
-  final String jobs;
+
+  /// Jobs-done label; defaults to the localized "128 jobs" when omitted.
+  final String? jobs;
   final VoidCallback? onViewProfile;
   final VoidCallback? onBook;
 
@@ -30,6 +33,8 @@ class ProviderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final jobsLabel = jobs ?? l10n.jobsCount(128);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -88,7 +93,7 @@ class ProviderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '★ $rating · $jobs',
+                      '★ $rating · $jobsLabel',
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.star,
@@ -120,12 +125,12 @@ class ProviderCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _CardButton(label: 'View Profile', onTap: onViewProfile),
+                child: _CardButton(label: l10n.viewProfile, onTap: onViewProfile),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _CardButton(
-                  label: 'Book Now',
+                  label: l10n.bookNow,
                   onTap: onBook,
                   filled: true,
                 ),

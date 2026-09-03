@@ -9,8 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
   font_awesome_flutter: ^11.0.0
   dio: ^5.9.2
+  flutter_svg: ^2.2.1
+  flutter_secure_storage: ^9.2.4
+  device_info_plus: ^11.3.0
+  geolocator: ^13.0.2
+  smart_auth: ^3.2.0
 
 dev_dependencies:
   flutter_test:
@@ -20,5 +28,37 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/logo.png
+    - assets/onboarding/
+    - assets/icons/categories/
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSans-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/NotoSans-Black.ttf
+          weight: 900
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansDevanagari-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansDevanagari-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansDevanagari-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSansDevanagari-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/NotoSansDevanagari-Black.ttf
+          weight: 900

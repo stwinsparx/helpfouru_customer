@@ -84,6 +84,12 @@ class AppGradients {
 }
 
 class AppTheme {
+  /// Primary family is Latin-only; Devanagari glyphs (Hindi copy, names,
+  /// addresses) fall back to the matching Noto weight automatically so
+  /// mixed-script text never falls back to the OS default font.
+  static const _fontFamily = 'NotoSans';
+  static const _fontFamilyFallback = ['NotoSansDevanagari'];
+
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
     return base.copyWith(
@@ -94,10 +100,59 @@ class AppTheme {
         surface: AppColors.card,
         error: AppColors.danger,
       ),
-      textTheme: base.textTheme.apply(
-        bodyColor: AppColors.ink,
-        displayColor: AppColors.ink,
-      ),
+      textTheme: base.textTheme
+          .apply(
+            bodyColor: AppColors.ink,
+            displayColor: AppColors.ink,
+            fontFamily: _fontFamily,
+          )
+          .copyWith(
+            displayLarge: base.textTheme.displayLarge?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            displayMedium: base.textTheme.displayMedium?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            displaySmall: base.textTheme.displaySmall?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            headlineLarge: base.textTheme.headlineLarge?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            headlineMedium: base.textTheme.headlineMedium?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            headlineSmall: base.textTheme.headlineSmall?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            titleLarge: base.textTheme.titleLarge?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            titleMedium: base.textTheme.titleMedium?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            titleSmall: base.textTheme.titleSmall?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            bodyLarge: base.textTheme.bodyLarge?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            bodyMedium: base.textTheme.bodyMedium?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            bodySmall: base.textTheme.bodySmall?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            labelLarge: base.textTheme.labelLarge?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            labelMedium: base.textTheme.labelMedium?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+            labelSmall: base.textTheme.labelSmall?.copyWith(
+              fontFamilyFallback: _fontFamilyFallback,
+            ),
+          ),
       splashFactory: InkRipple.splashFactory,
     );
   }

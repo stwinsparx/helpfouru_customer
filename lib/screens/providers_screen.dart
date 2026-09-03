@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -16,7 +17,6 @@ class ProvidersScreen extends StatefulWidget {
 }
 
 class _ProvidersScreenState extends State<ProvidersScreen> {
-  static const _filters = ['Recommended', 'Nearest', 'Top Rated', 'Price'];
   static const _railIcons = <FaIconData>[
     FontAwesomeIcons.snowflake,
     FontAwesomeIcons.screwdriverWrench,
@@ -26,17 +26,36 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
   ];
   int _filter = 0;
 
+  /// (name, canonical role key, rating, price, distance). The role key is
+  /// resolved to a localized label in [build] via [_roleLabel].
   static const _results = <(String, String, String, String, String)>[
-    ('Rajesh Kumar', 'AC Specialist', '4.9', '₹499', '2.1 km'),
+    ('Rajesh Kumar', 'AC Repair', '4.9', '₹499', '2.1 km'),
     ('Vikas Meena', 'Home Service Expert', '4.8', '₹449', '2.8 km'),
     ('Deepak Joshi', 'Certified Technician', '4.7', '₹399', '3.4 km'),
     ('Mohit Jain', 'AC & Appliance Pro', '4.9', '₹599', '4.1 km'),
   ];
 
+  String _roleLabel(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context);
+    return switch (key) {
+      'Home Service Expert' => l10n.roleHomeServiceExpert,
+      'Certified Technician' => l10n.roleCertifiedTechnician,
+      'AC & Appliance Pro' => l10n.roleAcAppliancePro,
+      _ => localizedServiceName(context, key),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
     final subs = state.subServices;
+    final l10n = AppLocalizations.of(context);
+    final filters = [
+      l10n.filterRecommended,
+      l10n.filterNearest,
+      l10n.filterTopRated,
+      l10n.filterPrice,
+    ];
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
@@ -59,10 +78,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 ),
                 itemCount: subs.length,
                 itemBuilder: (_, i) {
-                  final label = subs[i];
-                  final active = state.sub == label;
+                  final key = subs[i];
+                  final active = state.sub == key;
                   return GestureDetector(
-                    onTap: () => state.selectSub(label),
+                    onTap: () => state.selectSub(key),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 6),
                       padding: const EdgeInsets.symmetric(
@@ -84,7 +103,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            label,
+                            localizedServiceName(context, key),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 9.5,
@@ -111,17 +130,20 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                 children: [
                   MiniHeader(
-                    title: state.category,
-                    subtitle: '${state.sub} · 18 providers nearby',
+                    title: localizedServiceName(context, state.category),
+                    subtitle: l10n.providersNearbyCount(
+                      localizedServiceName(context, state.sub),
+                      18,
+                    ),
                     onBack: () => Navigator.of(context).pop(),
                   ),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: List.generate(
-                        _filters.length,
+                        filters.length,
                         (i) => FilterChipButton(
-                          label: _filters[i],
+                          label: filters[i],
                           selected: _filter == i,
                           onTap: () => setState(() => _filter = i),
                         ),
@@ -132,7 +154,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   ..._results.map(
                     (r) => ProviderCard(
                       name: r.$1,
-                      role: r.$2,
+                      role: _roleLabel(context, r.$2),
                       rating: r.$3,
                       price: r.$4,
                       distance: r.$5,

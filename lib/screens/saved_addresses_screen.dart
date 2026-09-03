@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -13,6 +14,10 @@ class _Address {
   });
 
   final FaIconData icon;
+
+  /// Canonical (non-localized) address label key — `'Home'` or `'Office'`.
+  /// Localize with [AppLocalizations.addressTypeHome] / `.addressTypeOffice`
+  /// via [_SavedAddressesScreenState._labelFor] before display.
   final String label;
   final String line;
   final String contact;
@@ -45,46 +50,54 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     ),
   ];
 
+  static String _labelFor(AppLocalizations l10n, String key) => switch (key) {
+    'Home' => l10n.addressTypeHome,
+    'Office' => l10n.addressTypeOffice,
+    _ => l10n.addressTypeOther,
+  };
+
   void _makeDefault(int index) {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       for (var i = 0; i < _addresses.length; i++) {
         _addresses[i].isDefault = i == index;
       }
     });
-    showAppToast(context, '${_addresses[index].label} set as default');
+    showAppToast(context, l10n.setAsDefaultToast(_labelFor(l10n, _addresses[index].label)));
   }
 
   void _confirmDelete(int index) {
+    final l10n = AppLocalizations.of(context);
     final address = _addresses[index];
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Delete address?',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        title: Text(
+          l10n.deleteAddressQuestion,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
         ),
         content: Text(
-          'Remove the "${address.label}" address from your account?',
+          l10n.deleteAddressConfirmBody(_labelFor(l10n, address.label)),
           style: const TextStyle(fontSize: 13, color: AppColors.muted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.muted),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: AppColors.muted),
             ),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               setState(() => _addresses.removeAt(index));
-              showAppToast(context, 'Address deleted');
+              showAppToast(context, l10n.addressDeletedToast);
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(
                 color: AppColors.danger,
                 fontWeight: FontWeight.w800,
               ),
@@ -97,6 +110,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.screenBg,
       body: SafeArea(
@@ -104,8 +118,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           children: [
             MiniHeader(
-              title: 'Saved Addresses',
-              subtitle: '${_addresses.length} saved',
+              title: l10n.savedAddressesHeader,
+              subtitle: l10n.savedCount(_addresses.length),
             ),
 
             if (_addresses.isEmpty)
@@ -119,18 +133,18 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                       color: Color(0xFFB6C2CF),
                     ),
                     const SizedBox(height: 14),
-                    const Text(
-                      'No saved addresses',
-                      style: TextStyle(
+                    Text(
+                      l10n.noSavedAddresses,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
                       ),
                     ),
                     const SizedBox(height: 5),
-                    const Text(
-                      'Add an address to book services faster.',
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    Text(
+                      l10n.addAddressFasterBooking,
+                      style: const TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                   ],
                 ),
@@ -168,7 +182,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      a.label,
+                                      _labelFor(l10n, a.label),
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w800,
@@ -177,8 +191,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                                     ),
                                     if (a.isDefault) ...[
                                       const SizedBox(width: 7),
-                                      const Pill(
-                                        label: 'DEFAULT',
+                                      Pill(
+                                        label: l10n.defaultBadge,
                                         fontSize: 8.5,
                                       ),
                                     ],
@@ -211,16 +225,16 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         children: [
                           _AddressAction(
                             icon: FontAwesomeIcons.penToSquare,
-                            label: 'Edit',
+                            label: l10n.editLabel,
                             onTap: () => showAppToast(
                               context,
-                              'Edit ${a.label} address',
+                              l10n.editAddressToast(_labelFor(l10n, a.label)),
                             ),
                           ),
                           const SizedBox(width: 8),
                           _AddressAction(
                             icon: FontAwesomeIcons.trashCan,
-                            label: 'Delete',
+                            label: l10n.deleteLabel,
                             danger: true,
                             onTap: () => _confirmDelete(i),
                           ),
@@ -234,7 +248,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                           children: [
                             _AddressAction(
                               icon: FontAwesomeIcons.circleCheck,
-                              label: 'Set as default',
+                              label: l10n.setAsDefault,
                               onTap: () => _makeDefault(i),
                             ),
                           ],
@@ -247,8 +261,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 
             const SizedBox(height: 6),
             SecondaryButton(
-              label: '+  Add New Address',
-              onTap: () => showAppToast(context, 'Add address form opened'),
+              label: l10n.addNewAddress,
+              onTap: () => showAppToast(context, l10n.addAddressFormOpenedToast),
             ),
           ],
         ),

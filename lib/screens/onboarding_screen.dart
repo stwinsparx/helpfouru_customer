@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../core/services/token_storage.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'login_screen.dart';
@@ -14,20 +16,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _index = 0;
 
-  static const _pages = <(String, String)>[
-    (
-      'Find trusted experts',
-      'Book verified local professionals for home, personal and utility services.',
-    ),
-    (
-      'Choose your way',
-      'Compare providers, view ratings, choose add-ons and select a convenient slot.',
-    ),
-    (
-      'Book with confidence',
-      'Pay securely, track the job live and manage every order from one place.',
-    ),
+  static const _gifs = <String>[
+    'assets/onboarding/page_1.gif',
+    'assets/onboarding/page_2.gif',
+    'assets/onboarding/page_3.gif',
   ];
+
+  List<(String, String, String)> _pages(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      (_gifs[0], l10n.onboardTitle1, l10n.onboardBody1),
+      (_gifs[1], l10n.onboardTitle2, l10n.onboardBody2),
+      (_gifs[2], l10n.onboardTitle3, l10n.onboardBody3),
+    ];
+  }
 
   @override
   void dispose() {
@@ -35,12 +37,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _goToLogin() => Navigator.of(
-    context,
-  ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+  void _goToLogin() {
+    TokenStorage.markOnboardingSeen();
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+  }
 
   void _next() {
-    if (_index < _pages.length - 1) {
+    if (_index < _gifs.length - 1) {
       _controller.nextPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOut,
@@ -52,37 +57,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = _index == _pages.length - 1;
+    final isLast = _index == _gifs.length - 1;
+    final pages = _pages(context);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: AppGradients.onboardBg),
         child: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 18, bottom: 6),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.asset(
-                    'assets/logo.png',
-                    width: 52,
-                    height: 52,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
-                  itemCount: _pages.length,
+                  itemCount: pages.length,
                   onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (_, i) =>
-                      _OnboardPage(title: _pages[i].$1, body: _pages[i].$2),
+                  itemBuilder: (_, i) => _OnboardPage(
+                    gif: pages[i].$1,
+                    title: pages[i].$2,
+                    body: pages[i].$3,
+                  ),
                 ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_pages.length, (i) {
+                children: List.generate(pages.length, (i) {
                   final active = i == _index;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
@@ -101,7 +98,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   children: [
                     PrimaryButton(
-                      label: isLast ? 'Get Started' : 'Continue',
+                      label: isLast
+                          ? AppLocalizations.of(context).getStarted
+                          : AppLocalizations.of(context).continueLabel,
                       onTap: _next,
                     ),
                     SizedBox(
@@ -110,9 +109,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ? null
                           : TextButton(
                               onPressed: _goToLogin,
-                              child: const Text(
-                                'Skip',
-                                style: TextStyle(
+                              child: Text(
+                                AppLocalizations.of(context).skip,
+                                style: const TextStyle(
                                   color: AppColors.blue,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -131,7 +130,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _OnboardPage extends StatelessWidget {
-  const _OnboardPage({required this.title, required this.body});
+  const _OnboardPage({
+    required this.gif,
+    required this.title,
+    required this.body,
+  });
+  final String gif;
   final String title;
   final String body;
 
@@ -167,9 +171,9 @@ class _OnboardPage extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: Image.asset(
-                        'assets/logo.png',
-                        width: 112,
-                        height: 112,
+                        gif,
+                        width: 220,
+                        height: 210,
                         fit: BoxFit.cover,
                       ),
                     ),

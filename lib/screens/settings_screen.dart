@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -16,27 +18,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = LocaleControllerScope.of(context).locale;
+    final languageSubtitle = locale.languageCode == 'hi'
+        ? l10n.languageSettingSubtitleHindi
+        : l10n.languageSettingSubtitleEnglish;
     return Scaffold(
       backgroundColor: AppColors.screenBg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const MiniHeader(title: 'Application Settings'),
+            MiniHeader(title: l10n.applicationSettingsHeader),
 
-            const _GroupLabel('Preferences'),
+            _GroupLabel(l10n.preferencesGroup),
             _SettingsGroup(
               children: [
                 _SettingRow(
                   icon: FontAwesomeIcons.globe,
-                  title: 'Language',
-                  subtitle: 'English',
+                  title: l10n.languageTitle,
+                  subtitle: languageSubtitle,
                   trailing: TextButton(
-                    onPressed: () =>
-                        showAppToast(context, 'Language selector opened'),
-                    child: const Text(
-                      'Change',
-                      style: TextStyle(
+                    onPressed: () => showLanguagePicker(context),
+                    child: Text(
+                      l10n.change,
+                      style: const TextStyle(
                         color: AppColors.blue,
                         fontWeight: FontWeight.w700,
                       ),
@@ -45,8 +51,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _SettingRow(
                   icon: FontAwesomeIcons.bell,
-                  title: 'Push Notifications',
-                  subtitle: 'Booking updates and alerts',
+                  title: l10n.pushNotificationsTitle,
+                  subtitle: l10n.pushNotificationsSubtitle,
                   trailing: Switch(
                     value: _push,
                     activeThumbColor: Colors.white,
@@ -56,8 +62,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _SettingRow(
                   icon: FontAwesomeIcons.bullhorn,
-                  title: 'Promotional Offers',
-                  subtitle: 'Deals and service recommendations',
+                  title: l10n.promotionalOffersTitle,
+                  subtitle: l10n.promotionalOffersSubtitle,
                   trailing: Switch(
                     value: _promos,
                     activeThumbColor: Colors.white,
@@ -68,35 +74,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
 
-            const _GroupLabel('Security'),
-            const _SettingsGroup(
+            _GroupLabel(l10n.securityGroup),
+            _SettingsGroup(
               children: [
                 _SettingRow(
                   icon: FontAwesomeIcons.lock,
-                  title: 'Login & Security',
-                  subtitle: 'OTP and account security',
+                  title: l10n.loginAndSecurityTitle,
+                  subtitle: l10n.loginAndSecuritySubtitle,
                 ),
                 _SettingRow(
                   icon: FontAwesomeIcons.fileInvoice,
-                  title: 'Payment Preferences',
-                  subtitle: 'Saved methods and invoices',
+                  title: l10n.paymentPreferencesTitle,
+                  subtitle: l10n.paymentPreferencesSubtitle,
                 ),
               ],
             ),
 
-            const _GroupLabel('App'),
-            const _SettingsGroup(
+            _GroupLabel(l10n.appGroup),
+            _SettingsGroup(
               children: [
                 _SettingRow(
                   icon: FontAwesomeIcons.solidStar,
-                  title: 'Rate HelpFourU',
-                  subtitle: 'Help us improve',
+                  title: l10n.rateHelpFourUTitle,
+                  subtitle: l10n.rateHelpFourUSubtitle,
                 ),
                 _SettingRow(
                   icon: FontAwesomeIcons.circleInfo,
-                  title: 'App Version',
-                  subtitle: 'Customer v1.0.0',
-                  trailing: SizedBox.shrink(),
+                  title: l10n.appVersionTitle,
+                  subtitle: l10n.appVersionSubtitle,
+                  trailing: const SizedBox.shrink(),
                 ),
               ],
             ),

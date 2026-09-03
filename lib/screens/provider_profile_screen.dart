@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'booking_screen.dart';
@@ -9,13 +10,14 @@ class ProviderProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.screenBg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const MiniHeader(title: 'Provider Profile'),
+            MiniHeader(title: l10n.providerProfileTitle),
 
             // Gradient cover with the overlapping avatar tile.
             SizedBox(
@@ -85,18 +87,18 @@ class ProviderProfileScreen extends StatelessWidget {
                     color: AppColors.mint,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      FaIcon(
+                      const FaIcon(
                         FontAwesomeIcons.circleCheck,
                         size: 9,
                         color: AppColors.greenDark,
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        'VERIFIED',
-                        style: TextStyle(
+                        l10n.verifiedBadge,
+                        style: const TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
                           color: AppColors.greenDark,
@@ -108,19 +110,19 @@ class ProviderProfileScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 5),
-            const Text(
-              'AC Specialist · 2.1 km away',
-              style: TextStyle(fontSize: 12, color: AppColors.muted),
+            Text(
+              l10n.acSpecialistDistance,
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
             ),
             const SizedBox(height: 14),
 
-            const Row(
+            Row(
               children: [
-                _Stat(value: '4.9 ★', label: 'Rating'),
-                SizedBox(width: 8),
-                _Stat(value: '128+', label: 'Jobs'),
-                SizedBox(width: 8),
-                _Stat(value: '6 yrs', label: 'Experience'),
+                _Stat(value: '4.9 ★', label: l10n.ratingLabel),
+                const SizedBox(width: 8),
+                _Stat(value: '128+', label: l10n.jobsLabel),
+                const SizedBox(width: 8),
+                _Stat(value: '6 yrs', label: l10n.experienceLabel),
               ],
             ),
             const SizedBox(height: 12),
@@ -129,15 +131,15 @@ class ProviderProfileScreen extends StatelessWidget {
               radius: 14,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'About Provider',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                    l10n.aboutProvider,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Certified technician for split/window AC service, installation, repair and gas refill. Background verified by HelpFourU.',
-                    style: TextStyle(
+                    l10n.aboutProviderBody,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.muted,
                       height: 1.55,
@@ -151,16 +153,16 @@ class ProviderProfileScreen extends StatelessWidget {
               radius: 14,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Services & Pricing',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                    l10n.servicesAndPricing,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
-                  SizedBox(height: 4),
-                  DetailRow(label: 'AC Service', value: '₹499'),
-                  DetailRow(label: 'Deep Cleaning', value: '₹899'),
+                  const SizedBox(height: 4),
+                  DetailRow(label: l10n.subAcService, value: '₹499'),
+                  DetailRow(label: l10n.deepCleaning, value: '₹899'),
                   DetailRow(
-                    label: 'Gas Refill',
+                    label: l10n.subGasRefill,
                     value: '₹1,799',
                     showDivider: false,
                   ),
@@ -170,7 +172,7 @@ class ProviderProfileScreen extends StatelessWidget {
             const SizedBox(height: 6),
 
             PrimaryButton(
-              label: 'Book Rajesh Kumar',
+              label: l10n.bookProviderName,
               onTap: () => Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const BookingScreen())),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 enum NavTab { home, orders, bid, alerts, profile }
@@ -10,16 +11,17 @@ class AppBottomNav extends StatelessWidget {
   final NavTab active;
   final ValueChanged<NavTab> onSelect;
 
-  static const _items = <(NavTab, FaIconData, String)>[
-    (NavTab.home, FontAwesomeIcons.house, 'Home'),
-    (NavTab.orders, FontAwesomeIcons.receipt, 'Orders'),
-    (NavTab.bid, FontAwesomeIcons.gavel, 'Bid'),
-    (NavTab.alerts, FontAwesomeIcons.bell, 'Alerts'),
-    (NavTab.profile, FontAwesomeIcons.user, 'Profile'),
+  List<(NavTab, FaIconData, String)> _items(AppLocalizations l10n) => [
+    (NavTab.home, FontAwesomeIcons.house, l10n.navHome),
+    (NavTab.orders, FontAwesomeIcons.receipt, l10n.navOrders),
+    (NavTab.bid, FontAwesomeIcons.gavel, l10n.navBid),
+    (NavTab.alerts, FontAwesomeIcons.bell, l10n.navAlerts),
+    (NavTab.profile, FontAwesomeIcons.user, l10n.navProfile),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final items = _items(AppLocalizations.of(context));
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xF7FFFFFF),
@@ -30,7 +32,7 @@ class AppBottomNav extends StatelessWidget {
         child: SizedBox(
           height: 66,
           child: Row(
-            children: _items.map((item) {
+            children: items.map((item) {
               final selected = item.$1 == active;
               return Expanded(
                 child: InkWell(

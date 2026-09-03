@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 
@@ -9,41 +10,39 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
+    final l10n = AppLocalizations.of(context);
 
     final notices = <_NoticeData>[
       _NoticeData(
         icon: FontAwesomeIcons.circleCheck,
         accent: AppColors.success,
-        title: 'Booking confirmed 🎉',
-        body:
-            'Rajesh Kumar accepted your AC service booking for ${state.slot}.',
-        time: '2 min ago',
+        title: l10n.noticeBookingConfirmedTitle,
+        body: l10n.noticeBookingConfirmedBody(state.slot),
+        time: l10n.minAgo,
         unread: true,
       ),
-      const _NoticeData(
+      _NoticeData(
         icon: FontAwesomeIcons.truck,
         accent: AppColors.blue,
-        title: 'Provider is on the way',
-        body:
-            'Your technician will arrive shortly. Track your order for live status.',
-        time: '18 min ago',
+        title: l10n.noticeProviderOnWayTitle,
+        body: l10n.noticeProviderOnWayBody,
+        time: l10n.minAgo18,
         unread: true,
       ),
       _NoticeData(
         icon: FontAwesomeIcons.indianRupeeSign,
         accent: AppColors.greenDark,
-        title: 'Payment successful',
-        body:
-            '₹${state.amount + AppState.platformFee} payment received for order #HFU10284.',
-        time: 'Today',
+        title: l10n.noticePaymentSuccessTitle,
+        body: l10n.noticePaymentSuccessBody(state.amount + AppState.platformFee),
+        time: l10n.todayLabel,
         unread: false,
       ),
-      const _NoticeData(
+      _NoticeData(
         icon: FontAwesomeIcons.userGroup,
         accent: AppColors.purple,
-        title: 'New providers nearby',
-        body: '3 top-rated AC professionals are available in your area.',
-        time: 'Yesterday',
+        title: l10n.noticeNewProvidersTitle,
+        body: l10n.noticeNewProvidersBody,
+        time: l10n.yesterdayLabel,
         unread: false,
       ),
     ];
@@ -55,9 +54,9 @@ class NotificationsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Text(
-              'Notifications',
-              style: TextStyle(
+            Text(
+              l10n.notificationsTitleHeading,
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,

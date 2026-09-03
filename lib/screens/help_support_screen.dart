@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -12,40 +13,27 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
-  static const _faqs = <(String, String)>[
-    (
-      'How do I reschedule a booking?',
-      'Open the order from My Orders, tap Track Order and choose Reschedule. Free up to 2 hours before the slot.',
-    ),
-    (
-      'When am I charged for a service?',
-      'Payment is taken when you place the order. Add-ons agreed on site are billed separately in the final invoice.',
-    ),
-    (
-      'What is your refund policy?',
-      'Cancel more than 2 hours before the slot for a full refund. Refunds reach the original payment method in 3-5 working days.',
-    ),
-    (
-      'Are professionals background verified?',
-      'Yes. Every provider passes identity and service-experience checks before they can accept jobs on HelpFourU.',
-    ),
-    (
-      'How do I raise a complaint about a job?',
-      'Open the completed order and tap Rate Service, or start a chat below and our team will follow up within 24 hours.',
-    ),
+  List<(String, String)> _faqs(AppLocalizations l10n) => [
+    (l10n.faqRescheduleQuestion, l10n.faqRescheduleAnswer),
+    (l10n.faqChargedQuestion, l10n.faqChargedAnswer),
+    (l10n.faqRefundQuestion, l10n.faqRefundAnswer),
+    (l10n.faqVerifiedQuestion, l10n.faqVerifiedAnswer),
+    (l10n.faqComplaintQuestion, l10n.faqComplaintAnswer),
   ];
 
   int? _open;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final faqs = _faqs(l10n);
     return Scaffold(
       backgroundColor: AppColors.screenBg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           children: [
-            const MiniHeader(title: 'Help & Support'),
+            MiniHeader(title: l10n.helpSupportTitle),
 
             // Contact banner.
             Container(
@@ -57,18 +45,18 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'We’re here to help',
-                    style: TextStyle(
+                  Text(
+                    l10n.hereToHelp,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Our support team replies within minutes, 24 hours a day.',
-                    style: TextStyle(
+                  Text(
+                    l10n.supportRepliesWithinMinutes,
+                    style: const TextStyle(
                       fontSize: 12,
                       height: 1.5,
                       color: Color(0xD9FFFFFF),
@@ -79,29 +67,29 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             ),
             const SizedBox(height: 16),
 
-            const SectionHead(title: 'Quick Help'),
+            SectionHead(title: l10n.quickHelp),
             Row(
               children: [
                 _QuickHelp(
                   icon: FontAwesomeIcons.receipt,
-                  label: 'Booking\nIssue',
-                  onTap: () => showAppToast(context, 'Booking help opened'),
+                  label: l10n.bookingIssue,
+                  onTap: () => showAppToast(context, l10n.bookingHelpOpenedToast),
                 ),
                 _QuickHelp(
                   icon: FontAwesomeIcons.creditCard,
-                  label: 'Payment\n& Refund',
-                  onTap: () => showAppToast(context, 'Payment help opened'),
+                  label: l10n.paymentAndRefund,
+                  onTap: () => showAppToast(context, l10n.paymentHelpOpenedToast),
                 ),
                 _QuickHelp(
                   icon: FontAwesomeIcons.userGear,
-                  label: 'Account\nHelp',
-                  onTap: () => showAppToast(context, 'Account help opened'),
+                  label: l10n.accountHelp,
+                  onTap: () => showAppToast(context, l10n.accountHelpOpenedToast),
                 ),
               ],
             ),
             const SizedBox(height: 18),
 
-            const SectionHead(title: 'Frequently Asked Questions'),
+            SectionHead(title: l10n.faqTitle),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -110,12 +98,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
               clipBehavior: Clip.antiAlias,
               child: Column(
-                children: List.generate(_faqs.length, (i) {
-                  final (q, a) = _faqs[i];
+                children: List.generate(faqs.length, (i) {
+                  final (q, a) = faqs[i];
                   final open = _open == i;
                   return Container(
                     decoration: BoxDecoration(
-                      border: i == _faqs.length - 1
+                      border: i == faqs.length - 1
                           ? null
                           : const Border(
                               bottom: BorderSide(color: Color(0xFFEDF1F4)),
@@ -187,27 +175,27 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             ),
             const SizedBox(height: 18),
 
-            const SectionHead(title: 'Reach Us'),
+            SectionHead(title: l10n.reachUs),
             AppCard(
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   _ContactRow(
                     icon: FontAwesomeIcons.envelope,
-                    title: 'Email',
+                    title: l10n.emailLabelShort,
                     value: 'support@helpfouru.com',
-                    onTap: () => showAppToast(context, 'Email app opened'),
+                    onTap: () => showAppToast(context, l10n.emailAppOpenedToast),
                   ),
                   _ContactRow(
                     icon: FontAwesomeIcons.phone,
-                    title: 'Toll Free',
+                    title: l10n.tollFreeLabel,
                     value: '1800 200 4567',
-                    onTap: () => showAppToast(context, 'Calling support...'),
+                    onTap: () => showAppToast(context, l10n.callingSupportToast),
                   ),
                   _ContactRow(
                     icon: FontAwesomeIcons.clock,
-                    title: 'Support Hours',
-                    value: 'Open 24 × 7',
+                    title: l10n.supportHoursLabel,
+                    value: l10n.open24x7,
                     isLast: true,
                   ),
                 ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -7,17 +8,36 @@ import '../widgets/common.dart';
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
 
+  /// (title, subtitle, kind). 0 = done, 1 = current, 2 = pending. Subtitles
+  /// that are fixed clock times ("10:02 AM") stay as-is; "Pending" and the
+  /// ETA range are localized in [build] via [_stepSubtitle].
   static const _steps = <(String, String, int)>[
-    ('Booking confirmed', '10:02 AM', 0), // 0 = done
+    ('Booking confirmed', '10:02 AM', 0),
     ('Provider accepted', '10:05 AM', 0),
-    ('Provider on the way', 'ETA 12–18 min', 1), // 1 = current
-    ('Service started', 'Pending', 2), // 2 = pending
+    ('Provider on the way', 'ETA 12–18 min', 1),
+    ('Service started', 'Pending', 2),
     ('Job completed', 'Pending', 2),
   ];
+
+  static String _stepTitle(AppLocalizations l10n, String key) => switch (key) {
+    'Booking confirmed' => l10n.stepBookingConfirmed,
+    'Provider accepted' => l10n.stepProviderAccepted,
+    'Provider on the way' => l10n.stepProviderOnTheWay,
+    'Service started' => l10n.stepServiceStarted,
+    'Job completed' => l10n.stepJobCompleted,
+    _ => key,
+  };
+
+  static String _stepSubtitle(AppLocalizations l10n, String key) => switch (key) {
+    'ETA 12–18 min' => l10n.etaMinutesRange,
+    'Pending' => l10n.pendingLabel,
+    _ => key,
+  };
 
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
@@ -25,7 +45,7 @@ class TrackingScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const MiniHeader(title: 'Track Order'),
+            MiniHeader(title: l10n.trackOrderTitle),
 
             AppCard(
               radius: 14,
@@ -36,16 +56,16 @@ class TrackingScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Order #HFU10284',
-                          style: TextStyle(
+                        Text(
+                          l10n.orderNumberLabel,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${state.sub} · Rajesh Kumar',
+                          l10n.subWithProviderName(localizedServiceName(context, state.sub)),
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.muted,
@@ -54,7 +74,7 @@ class TrackingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Pill(label: 'ON THE WAY', fontSize: 9.5),
+                  Pill(label: l10n.onTheWayBadge, fontSize: 9.5),
                 ],
               ),
             ),
@@ -67,21 +87,21 @@ class TrackingScreen extends StatelessWidget {
               radius: 14,
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Rajesh Kumar is on the way',
-                          style: TextStyle(
+                          l10n.providerOnTheWay,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'ETA 12–18 min · 1.2 km away',
-                          style: TextStyle(
+                          l10n.etaDistance,
+                          style: const TextStyle(
                             fontSize: 11.5,
                             color: AppColors.muted,
                           ),
@@ -90,7 +110,7 @@ class TrackingScreen extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => showAppToast(context, 'Calling provider...'),
+                    onTap: () => showAppToast(context, l10n.callingProviderToast),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -100,17 +120,17 @@ class TrackingScreen extends StatelessWidget {
                         color: const Color(0xFFE6F7EF),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          FaIcon(
+                          const FaIcon(
                             FontAwesomeIcons.phone,
                             size: 12,
                             color: AppColors.greenDark,
                           ),
-                          SizedBox(width: 5),
+                          const SizedBox(width: 5),
                           Text(
-                            'Call',
-                            style: TextStyle(
+                            l10n.call,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: AppColors.greenDark,
@@ -128,8 +148,8 @@ class TrackingScreen extends StatelessWidget {
             ...List.generate(_steps.length, (i) {
               final (title, sub, kind) = _steps[i];
               return _TimelineStep(
-                title: title,
-                subtitle: sub,
+                title: _stepTitle(l10n, title),
+                subtitle: _stepSubtitle(l10n, sub),
                 kind: kind,
                 index: i,
                 isLast: i == _steps.length - 1,

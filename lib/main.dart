@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/services/locale_controller.dart';
+import 'l10n/app_localizations.dart';
 import 'models/app_state.dart';
-import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -16,9 +19,21 @@ class HelpFourUApp extends StatefulWidget {
 
 class _HelpFourUAppState extends State<HelpFourUApp> {
   final _state = AppState();
+  final _localeController = LocaleController();
+
+  @override
+  void initState() {
+    super.initState();
+    _localeController.addListener(_onLocaleChanged);
+    _localeController.load();
+  }
+
+  void _onLocaleChanged() => setState(() {});
 
   @override
   void dispose() {
+    _localeController.removeListener(_onLocaleChanged);
+    _localeController.dispose();
     _state.dispose();
     super.dispose();
   }
@@ -27,12 +42,46 @@ class _HelpFourUAppState extends State<HelpFourUApp> {
   Widget build(BuildContext context) {
     return AppStateScope(
       state: _state,
-      child: MaterialApp(
-        title: 'HelpFourU',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        home: const OnboardingScreen(),
+      child: LocaleControllerScope(
+        controller: _localeController,
+        child: MaterialApp(
+          title: 'HelpFourU',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          locale: _localeController.locale,
+          supportedLocales: LocaleController.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const SplashScreen(),
+        ),
       ),
     );
   }
+}
+
+/// Lets any screen read the active [LocaleController] and call
+/// `setLocale()` without prop-drilling it through every route.
+class LocaleControllerScope extends InheritedWidget {
+  const LocaleControllerScope({
+    super.key,
+    required this.controller,
+    required super.child,
+  });
+
+  final LocaleController controller;
+
+  static LocaleController of(BuildContext context) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<LocaleControllerScope>();
+    assert(scope != null, 'No LocaleControllerScope found in context');
+    return scope!.controller;
+  }
+
+  @override
+  bool updateShouldNotify(LocaleControllerScope oldWidget) =>
+      controller != oldWidget.controller;
 }

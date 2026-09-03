@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
+import '../models/current_user.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -12,9 +14,9 @@ class PersonalInfoScreen extends StatefulWidget {
 }
 
 class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
-  final _name = TextEditingController(text: 'Shubham Kumar');
-  final _mobile = TextEditingController(text: '98765 43210');
-  final _email = TextEditingController(text: 'shubham@example.com');
+  final _name = TextEditingController();
+  final _mobile = TextEditingController();
+  final _email = TextEditingController();
   final _address = TextEditingController(text: 'e 27 Adarsh nagar');
   final _landmark = TextEditingController();
   final _city = TextEditingController(text: 'Udaipur');
@@ -22,6 +24,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _pin = TextEditingController(text: '313001');
 
   bool _dirty = false;
+  String _initials = '?';
 
   List<TextEditingController> get _controllers => [
     _name,
@@ -37,9 +40,22 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   @override
   void initState() {
     super.initState();
+    _loadCurrentUser();
     for (final c in _controllers) {
       c.addListener(_markDirty);
     }
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await CurrentUser.load();
+    if (!mounted || user == null) return;
+    _name.text = user.name;
+    _mobile.text = user.phone;
+    _email.text = user.email;
+    setState(() {
+      _initials = user.initials;
+      _dirty = false;
+    });
   }
 
   void _markDirty() {
@@ -55,20 +71,22 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   }
 
   void _save() {
+    final l10n = AppLocalizations.of(context);
     FocusScope.of(context).unfocus();
     setState(() => _dirty = false);
-    showAppToast(context, 'Profile updated successfully');
+    showAppToast(context, l10n.profileUpdatedToast);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.screenBg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           children: [
-            const MiniHeader(title: 'Personal Information'),
+            MiniHeader(title: l10n.personalInformationHeader),
 
             // Avatar with a change-photo affordance.
             Center(
@@ -85,9 +103,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                           gradient: AppGradients.avatar,
                           shape: BoxShape.circle,
                         ),
-                        child: const Text(
-                          'SK',
-                          style: TextStyle(
+                        child: Text(
+                          _initials,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
                             fontWeight: FontWeight.w900,
@@ -99,7 +117,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         bottom: -2,
                         child: GestureDetector(
                           onTap: () =>
-                              showAppToast(context, 'Photo picker opened'),
+                              showAppToast(context, l10n.photoPickerOpenedToast),
                           child: Container(
                             width: 30,
                             height: 30,
@@ -123,7 +141,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const Pill(label: '✓ VERIFIED ACCOUNT', fontSize: 9),
+                  Pill(label: l10n.verifiedAccountBadge, fontSize: 9),
                 ],
               ),
             ),
@@ -133,25 +151,25 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Basic Details',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.basicDetails,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 12),
                   LabeledField(
-                    label: 'FULL NAME',
+                    label: l10n.fullNameLabel,
                     child: TextField(
                       controller: _name,
                       textCapitalization: TextCapitalization.words,
-                      decoration: appInputDecoration('Enter your name'),
+                      decoration: appInputDecoration(l10n.enterYourNameHint),
                     ),
                   ),
                   LabeledField(
-                    label: 'MOBILE NUMBER',
+                    label: l10n.mobileNumberFieldLabel,
                     child: TextField(
                       controller: _mobile,
                       keyboardType: TextInputType.phone,
-                      decoration: appInputDecoration('Enter mobile number')
+                      decoration: appInputDecoration(l10n.enterMobileNumberHint)
                           .copyWith(
                             prefixIcon: const Padding(
                               padding: EdgeInsets.only(left: 14, right: 8),
@@ -172,11 +190,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     ),
                   ),
                   LabeledField(
-                    label: 'EMAIL ADDRESS',
+                    label: l10n.emailAddressLabel,
                     child: TextField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: appInputDecoration('you@example.com'),
+                      decoration: appInputDecoration(l10n.emailHint),
                     ),
                   ),
                 ],
@@ -187,9 +205,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'LOCATION DETAILS',
-                    style: TextStyle(
+                  Text(
+                    l10n.locationDetailsLabel,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF8190A1),
@@ -198,31 +216,31 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   ),
                   const SizedBox(height: 14),
                   _LocationField(
-                    label: 'Address',
+                    label: l10n.addressFieldLabel,
                     icon: FontAwesomeIcons.house,
                     controller: _address,
                     hint: 'e 27 Adarsh nagar',
                   ),
                   _LocationField(
-                    label: 'Landmark',
+                    label: l10n.landmarkFieldLabel,
                     icon: FontAwesomeIcons.locationDot,
                     controller: _landmark,
-                    hint: 'Nearby landmark',
+                    hint: l10n.nearbyLandmarkHint,
                   ),
                   _LocationField(
-                    label: 'City',
+                    label: l10n.cityFieldLabel,
                     icon: FontAwesomeIcons.city,
                     controller: _city,
                     hint: 'Udaipur',
                   ),
                   _LocationField(
-                    label: 'State',
+                    label: l10n.stateFieldLabel,
                     icon: FontAwesomeIcons.map,
                     controller: _state,
                     hint: 'Rajasthan',
                   ),
                   _LocationField(
-                    label: 'Pin Code',
+                    label: l10n.pinCodeFieldLabel,
                     icon: FontAwesomeIcons.mapPin,
                     controller: _pin,
                     hint: '313001',
@@ -235,7 +253,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             const SizedBox(height: 6),
 
             PrimaryButton(
-              label: _dirty ? 'Save Changes' : 'Saved',
+              label: _dirty ? l10n.saveChanges : l10n.saved,
               onTap: _dirty ? _save : null,
             ),
           ],

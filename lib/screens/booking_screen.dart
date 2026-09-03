@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -7,11 +8,20 @@ import 'payment_screen.dart';
 class BookingScreen extends StatelessWidget {
   const BookingScreen({super.key});
 
+  // Canonical (non-localized) add-on keys, matched against [AppState]'s
+  // add-on tracking. Localize with [_addonLabel] before display.
   static const _addons = <Addon>[
     Addon('AC Foam Cleaning', 299),
     Addon('Copper Pipe Inspection', 149),
     Addon('Cooling Performance Check', 99),
   ];
+
+  static String _addonLabel(AppLocalizations l10n, String key) => switch (key) {
+    'AC Foam Cleaning' => l10n.addonAcFoamCleaning,
+    'Copper Pipe Inspection' => l10n.addonCopperPipeInspection,
+    'Cooling Performance Check' => l10n.addonCoolingPerformanceCheck,
+    _ => key,
+  };
 
   static const _slots = [
     '9:00 AM',
@@ -34,6 +44,7 @@ class BookingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
@@ -41,7 +52,7 @@ class BookingScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const MiniHeader(title: 'Review & Schedule'),
+            MiniHeader(title: l10n.reviewAndSchedule),
 
             // Service summary.
             AppCard(
@@ -53,16 +64,16 @@ class BookingScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          state.sub,
+                          localizedServiceName(context, state.sub),
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Rajesh Kumar · Verified Pro',
-                          style: TextStyle(
+                        Text(
+                          l10n.verifiedProDistance,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.muted,
                           ),
@@ -86,9 +97,9 @@ class BookingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Recommended Add-ons',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.recommendedAddons,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 4),
                   ..._addons.map((addon) {
@@ -111,7 +122,7 @@ class BookingScreen extends StatelessWidget {
                                 style: const TextStyle(color: AppColors.ink),
                                 children: [
                                   TextSpan(
-                                    text: addon.name,
+                                    text: _addonLabel(l10n, addon.name),
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
@@ -143,7 +154,7 @@ class BookingScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                added ? 'ADDED' : 'ADD',
+                                added ? l10n.added : l10n.add,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
@@ -167,9 +178,9 @@ class BookingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select Booking Slot',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.selectBookingSlot,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 10),
                   GridView.builder(
@@ -225,20 +236,20 @@ class BookingScreen extends StatelessWidget {
             AppCard(
               child: Column(
                 children: [
-                  DetailRow(label: 'Service', value: '₹${state.amount}'),
+                  DetailRow(label: l10n.serviceLabel, value: '₹${state.amount}'),
                   DetailRow(
-                    label: 'Add-ons',
+                    label: l10n.addonsLabel,
                     value: '₹${state.addonsTotal}',
                     showDivider: false,
                   ),
-                  TotalRow(label: 'Total', value: '₹${state.subtotal}'),
+                  TotalRow(label: l10n.totalLabel, value: '₹${state.subtotal}'),
                 ],
               ),
             ),
             const SizedBox(height: 6),
 
             PrimaryButton(
-              label: 'Proceed to Payment · ₹${state.subtotal}',
+              label: l10n.proceedToPayment(state.subtotal),
               onTap: () => Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const PaymentScreen())),

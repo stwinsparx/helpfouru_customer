@@ -1,52 +1,38 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
-  static const _sections = <(String, String)>[
-    (
-      'Information We Collect',
-      'Account details, service requests, address, device information and transaction data.',
-    ),
-    (
-      'How We Use Data',
-      'To match providers, communicate booking updates, process payments and improve services.',
-    ),
-    (
-      'Location Data',
-      'Location is used to surface nearby providers and support live order tracking.',
-    ),
-    (
-      'Payments',
-      'Payment credentials are handled through secure payment partners; sensitive card data is not stored in the app UI.',
-    ),
-    (
-      'Your Controls',
-      'You can manage notifications, saved addresses and account preferences from Settings.',
-    ),
+  List<(String, String)> _sections(AppLocalizations l10n) => [
+    (l10n.privacySection1Title, l10n.privacySection1Body),
+    (l10n.privacySection2Title, l10n.privacySection2Body),
+    (l10n.privacySection3Title, l10n.privacySection3Body),
+    (l10n.privacySection4Title, l10n.privacySection4Body),
+    (l10n.privacySection5Title, l10n.privacySection5Body),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.screenBg,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const MiniHeader(title: 'Privacy Policy'),
-            const _PolicyCard(
-              title: 'Your Privacy Matters',
-              body:
-                  'HelpFourU uses your account, location and booking information to connect you with service professionals, process payments and provide order tracking.',
+            MiniHeader(title: l10n.privacyPolicyHeader),
+            _PolicyCard(
+              title: l10n.yourPrivacyMattersTitle,
+              body: l10n.yourPrivacyMattersBody,
             ),
-            ..._sections.map((s) => _PolicyCard(title: s.$1, body: s.$2)),
+            ..._sections(l10n).map((s) => _PolicyCard(title: s.$1, body: s.$2)),
             const SizedBox(height: 6),
             SecondaryButton(
-              label: 'Request My Data / Delete Account',
-              onTap: () => showAppToast(context, 'Privacy request submitted'),
+              label: l10n.requestDataDeleteAccount,
+              onTap: () => showAppToast(context, l10n.privacyRequestSubmittedToast),
             ),
           ],
         ),

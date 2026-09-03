@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../core/services/api_service.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
+import '../models/current_user.dart';
+import '../models/home_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/provider_card.dart';
 import '../widgets/promo_carousel.dart';
+import '../widgets/home_image_carousel.dart';
 import 'providers_screen.dart';
 import 'provider_profile_screen.dart';
 import 'booking_screen.dart';
@@ -21,22 +26,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
-  Map<String, dynamic>? _homeData;
+  HomeData? _homeData;
   bool _isLoading = true;
+  CurrentUser? _currentUser;
 
-  static const _cats = <(FaIconData, String)>[
-    (FontAwesomeIcons.bolt, 'Electrician'),
-    (FontAwesomeIcons.wrench, 'Plumber'),
-    (FontAwesomeIcons.snowflake, 'AC Repair'),
-    (FontAwesomeIcons.broom, 'Cleaning'),
-    (FontAwesomeIcons.hammer, 'Carpenter'),
-    (FontAwesomeIcons.paintRoller, 'Painter'),
-    (FontAwesomeIcons.car, 'Car Wash'),
-    (FontAwesomeIcons.plug, 'Appliance'),
-    (FontAwesomeIcons.key, 'Locksmith'),
-    (FontAwesomeIcons.boxOpen, 'Packers'),
-    (FontAwesomeIcons.scissors, 'Beauty'),
-    (FontAwesomeIcons.ellipsis, 'View All'),
+  /// (icon asset, canonical category key). The key drives [AppState]
+  /// matching and is localized for display via [localizedServiceName].
+  static const _cats = <(String, String)>[
+    ('assets/icons/categories/electrician.svg', 'Electrician'),
+    ('assets/icons/categories/plumber.svg', 'Plumber'),
+    ('assets/icons/categories/ac_repair.svg', 'AC Repair'),
+    ('assets/icons/categories/cleaning.svg', 'Cleaning'),
+    ('assets/icons/categories/carpenter.svg', 'Carpenter'),
+    ('assets/icons/categories/painter.svg', 'Painter'),
+    ('assets/icons/categories/car_wash.svg', 'Car Wash'),
+    ('assets/icons/categories/appliance.svg', 'Appliance'),
+    ('assets/icons/categories/locksmith.svg', 'Locksmith'),
+    ('assets/icons/categories/packers.svg', 'Packers'),
+    ('assets/icons/categories/beauty.svg', 'Beauty'),
+    ('assets/icons/categories/view_all.svg', 'View All'),
   ];
 
   static const _popular = {'AC Repair', 'Electrician', 'Cleaning', 'Plumber'};
@@ -45,13 +53,23 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchHomeData();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await CurrentUser.load();
+    if (mounted) setState(() => _currentUser = user);
   }
 
   Future<void> _fetchHomeData() async {
     try {
       final response = await _apiService.get('/customer/home');
       if (response.statusCode == 200 && response.data['is_success'] == true) {
-        setState(() => _homeData = response.data['data']);
+        setState(
+          () => _homeData = HomeData.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Home API error: $e');
@@ -67,12 +85,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       color: AppColors.homeBg,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          _Header(onProviders: () => _openProviders(context)),
+      child: RefreshIndicator(
+        color: AppColors.green,
+        onRefresh: _fetchHomeData,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+          _Header(
+            onProviders: () => _openProviders(context),
+            sliders: _homeData?.homeSliders ?? const [],
+            isLoadingSliders: _isLoading,
+            user: _currentUser,
+          ),
           const SizedBox(height: 16),
 
           // ── Explore Services ────────────────────────────────────────
@@ -82,8 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionHead(
-                  title: 'Explore Services',
-                  actionLabel: 'View all',
+                  title: l10n.exploreServices,
+                  actionLabel: l10n.viewAll,
                   onAction: () => _openProviders(context),
                 ),
                 GridView.builder(
@@ -97,13 +124,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     childAspectRatio: 0.80,
                   ),
                   itemBuilder: (_, i) {
-                    final (icon, label) = _cats[i];
+                    final (iconAsset, key) = _cats[i];
                     return _CategoryTile(
-                      icon: icon,
-                      label: label,
-                      popular: _popular.contains(label),
+                      iconAsset: iconAsset,
+                      label: localizedServiceName(context, key),
+                      popular: _popular.contains(key),
                       onTap: () {
-                        state.selectCategory(label);
+                        state.selectCategory(key);
                         _openProviders(context);
                       },
                     );
@@ -117,44 +144,48 @@ class _HomeScreenState extends State<HomeScreen> {
           // ── Promo banner ────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 17),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: PromoCard(
-                slide: PromoSlide(
-                  eyebrow: 'LIMITED TIME OFFER',
-                  title: 'Flat ₹100 off your first booking',
-                  subtitle: 'Use code WELCOME100 at checkout on any service.',
-                  gradient: AppGradients.banner,
-                  icon: FontAwesomeIcons.tags,
-                  onTap: () => _openProviders(context),
-                ),
-              ),
-            ),
+            child: _homeData?.homeBanner != null
+                ? HomeBannerCard(
+                    banner: _homeData!.homeBanner!,
+                    onTap: () => _openHomeImage(context, _homeData!.homeBanner!),
+                  )
+                : AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: PromoCard(
+                      slide: PromoSlide(
+                        eyebrow: l10n.limitedTimeOffer,
+                        title: l10n.flatOffFirstBooking,
+                        subtitle: l10n.useCodeWelcome100,
+                        gradient: AppGradients.banner,
+                        icon: FontAwesomeIcons.tags,
+                        onTap: () => _openProviders(context),
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(height: 20),
 
           // ── Why customers choose HelpFourU ──────────────────────────
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 17),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SectionHead(title: 'Why customers choose HelpFourU'),
+                SectionHead(title: l10n.whyChooseHelpFourU),
                 _Recommendation(
                   icon: FontAwesomeIcons.circleCheck,
-                  title: 'Verified professionals',
-                  body:
-                      'Identity and service experience checks before joining.',
+                  title: l10n.verifiedProfessionalsTitle,
+                  body: l10n.verifiedProfessionalsBody,
                 ),
                 _Recommendation(
                   icon: FontAwesomeIcons.solidStar,
-                  title: 'Real ratings & reviews',
-                  body: 'Compare service quality before you book.',
+                  title: l10n.realRatingsTitle,
+                  body: l10n.realRatingsBody,
                 ),
                 _Recommendation(
                   icon: FontAwesomeIcons.indianRupeeSign,
-                  title: 'Transparent pricing',
-                  body: 'See service price, add-ons and total before payment.',
+                  title: l10n.transparentPricingTitle,
+                  body: l10n.transparentPricingBody,
                 ),
               ],
             ),
@@ -168,13 +199,13 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionHead(
-                  title: 'Top Rated Near You',
-                  actionLabel: 'See all',
+                  title: l10n.topRatedNearYou,
+                  actionLabel: l10n.seeAll,
                   onAction: () => _openProviders(context),
                 ),
                 ProviderCard(
                   name: 'Rajesh Kumar',
-                  role: 'AC Specialist',
+                  role: localizedServiceName(context, 'AC Repair'),
                   rating: '4.9',
                   price: '₹499 onwards',
                   distance: '2.1 km',
@@ -189,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 ProviderCard(
                   name: 'Amit Sharma',
-                  role: 'Electrician',
+                  role: localizedServiceName(context, 'Electrician'),
                   rating: '4.8',
                   price: '₹299 onwards',
                   distance: '1.4 km',
@@ -218,22 +249,22 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Can't find the right professional?",
-                          style: TextStyle(
+                          l10n.cantFindProfessional,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 5),
                         Text(
-                          'Publish your requirement and let nearby providers send you offers.',
-                          style: TextStyle(
+                          l10n.publishRequirementBanner,
+                          style: const TextStyle(
                             color: Color(0xD9FFFFFF),
                             fontSize: 11,
                             height: 1.4,
@@ -257,9 +288,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(9),
                       ),
                     ),
-                    child: const Text(
-                      'Start Bidding',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.startBidding,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
@@ -269,58 +300,54 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        ],
+
+          // ── Gallery ──────────────────────────────────────────────────
+          if ((_homeData?.gallery.isNotEmpty ?? false))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(17, 0, 17, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHead(title: l10n.gallery),
+                  HomeGalleryGrid(
+                    images: _homeData!.gallery,
+                    onTap: (image) => _openHomeImage(context, image),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Slide content for the promo carousel under the home search bar.
-List<PromoSlide> _promoSlides(BuildContext context) {
-  return [
-    PromoSlide(
-      eyebrow: 'NEW ON HELPFOURU',
-      title: 'Deep home cleaning\nstarting at ₹499',
-      subtitle: 'Book a verified cleaning expert in under 2 minutes.',
-      gradient: AppGradients.hero,
-      icon: FontAwesomeIcons.broom,
-      onTap: () {
-        AppStateScope.of(context).selectCategory('Cleaning');
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const ProvidersScreen()));
-      },
-    ),
-    PromoSlide(
-      eyebrow: 'REFER & EARN',
-      title: 'Give ₹150, get ₹150',
-      subtitle: 'Invite friends to HelpFourU and earn wallet credit.',
-      gradient: AppGradients.purpleBlue,
-      icon: FontAwesomeIcons.gift,
-      onTap: () => showAppToast(context, 'Referral screen opened'),
-    ),
-    PromoSlide(
-      eyebrow: 'AC SEASON SPECIAL',
-      title: 'AC service at flat ₹399',
-      subtitle: 'Beat the heat with our top-rated technicians.',
-      gradient: AppGradients.brand,
-      icon: FontAwesomeIcons.snowflake,
-      onTap: () {
-        AppStateScope.of(context).selectCategory('AC Repair');
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const ProvidersScreen()));
-      },
-    ),
-  ];
+/// Handles a tap on an API-driven home image (slider, banner or gallery
+/// item) — surfaces the redirect URL if one is set, otherwise no-ops.
+void _openHomeImage(BuildContext context, HomeImage image) {
+  if (image.redirectUrl == null || image.redirectUrl!.isEmpty) return;
+  showAppToast(
+    context,
+    AppLocalizations.of(context).openingLink(image.redirectUrl!),
+  );
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onProviders});
+  const _Header({
+    required this.onProviders,
+    this.sliders = const [],
+    this.isLoadingSliders = false,
+    this.user,
+  });
   final VoidCallback onProviders;
+  final List<HomeImage> sliders;
+  final bool isLoadingSliders;
+  final CurrentUser? user;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -335,30 +362,32 @@ class _Header extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Good morning, Shubham',
-                          style: TextStyle(
+                          user != null
+                              ? l10n.goodMorningWithName(user!.name.split(' ').first)
+                              : l10n.goodMorning,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.muted,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'How can we help today?',
-                          style: TextStyle(
+                          l10n.howCanWeHelpToday,
+                          style: const TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                           ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          '⌖ Udaipur, Rajasthan · Home',
-                          style: TextStyle(
+                          l10n.homeLocationLine,
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.muted,
                           ),
@@ -376,9 +405,9 @@ class _Header extends StatelessWidget {
                         gradient: AppGradients.avatar,
                         shape: BoxShape.circle,
                       ),
-                      child: const Text(
-                        'SK',
-                        style: TextStyle(
+                      child: Text(
+                        user?.initials ?? '?',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 13,
@@ -401,19 +430,19 @@ class _Header extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFE6EDF3)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    FaIcon(
+                    const FaIcon(
                       FontAwesomeIcons.magnifyingGlass,
                       size: 14,
                       color: Color(0xFF8391A3),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Search services, providers or anything you need',
+                        l10n.searchServicesHint,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12.5,
                           color: Color(0xFF8391A3),
                         ),
@@ -424,8 +453,15 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // Promo slider.
-              PromoCarousel(slides: _promoSlides(context)),
+              // Promo slider — API-driven images, with a skeleton shown
+              // while loading instead of any static placeholder content.
+              if (isLoadingSliders)
+                const HomeSliderSkeleton()
+              else if (sliders.isNotEmpty)
+                HomeImageCarousel(
+                  slides: sliders,
+                  onTap: (slide) => _openHomeImage(context, slide),
+                ),
               const SizedBox(height: 14),
 
               // Hero card.
@@ -452,9 +488,9 @@ class _Header extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'HELPFOURU · TRUSTED HOME SERVICES',
-                              style: TextStyle(
+                            Text(
+                              l10n.heroEyebrow,
+                              style: const TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1.1,
@@ -462,9 +498,9 @@ class _Header extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 7),
-                            const Text(
-                              'Reliable help.\nRight when you need it.',
-                              style: TextStyle(
+                            Text(
+                              l10n.heroTitle,
+                              style: const TextStyle(
                                 fontSize: 21,
                                 height: 1.18,
                                 fontWeight: FontWeight.w800,
@@ -472,9 +508,9 @@ class _Header extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 7),
-                            const Text(
-                              'Discover verified professionals near you, compare profiles and book in a few simple steps.',
-                              style: TextStyle(
+                            Text(
+                              l10n.heroBody,
+                              style: const TextStyle(
                                 fontSize: 11.5,
                                 height: 1.45,
                                 color: Color(0xDBFFFFFF),
@@ -488,12 +524,12 @@ class _Header extends StatelessWidget {
                               runSpacing: 8,
                               children: [
                                 _HeroButton(
-                                  label: 'Find a Professional',
+                                  label: l10n.findAProfessional,
                                   trailing: FontAwesomeIcons.arrowRight,
                                   onTap: onProviders,
                                 ),
                                 _HeroButton(
-                                  label: 'Post a Job',
+                                  label: l10n.postAJob,
                                   ghost: true,
                                   onTap: () => AppShell.goToTab(context, 2),
                                 ),
@@ -513,24 +549,24 @@ class _Header extends StatelessWidget {
                 children: [
                   _QuickAction(
                     icon: FontAwesomeIcons.receipt,
-                    label: 'My Orders',
+                    label: l10n.myOrders,
                     onTap: () => AppShell.goToTab(context, 1),
                   ),
                   _QuickAction(
                     icon: FontAwesomeIcons.locationCrosshairs,
-                    label: 'Track Order',
+                    label: l10n.trackOrder,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const TrackingScreen()),
                     ),
                   ),
                   _QuickAction(
                     icon: FontAwesomeIcons.gavel,
-                    label: 'Post Bid',
+                    label: l10n.postBid,
                     onTap: () => AppShell.goToTab(context, 2),
                   ),
                   _QuickAction(
                     icon: FontAwesomeIcons.bell,
-                    label: 'Alerts',
+                    label: l10n.alerts,
                     onTap: () => AppShell.goToTab(context, 3),
                   ),
                 ],
@@ -643,12 +679,12 @@ class _QuickAction extends StatelessWidget {
 
 class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
-    required this.icon,
+    required this.iconAsset,
     required this.label,
     required this.popular,
     this.onTap,
   });
-  final FaIconData icon;
+  final String iconAsset;
   final String label;
   final bool popular;
   final VoidCallback? onTap;
@@ -685,15 +721,10 @@ class _CategoryTile extends StatelessWidget {
                     // Top inset leaves room for the "Popular" badge so it
                     // never crowds the icon on featured tiles.
                     const SizedBox(height: 10),
-                    Container(
-                      width: 34,
-                      height: 34,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.mint,
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: FaIcon(icon, size: 14, color: AppColors.greenDark),
+                    SvgPicture.asset(
+                      iconAsset,
+                      width: 38,
+                      height: 38,
                     ),
                     const SizedBox(height: 6),
                     Padding(
@@ -726,9 +757,9 @@ class _CategoryTile extends StatelessWidget {
                       color: AppColors.mint,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
-                      'Popular',
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context).popularBadge,
+                      style: const TextStyle(
                         fontSize: 6.5,
                         fontWeight: FontWeight.w900,
                         color: AppColors.greenDark,

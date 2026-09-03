@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../core/services/token_storage.dart';
+import '../l10n/app_localizations.dart';
+import '../models/current_user.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'personal_info_screen.dart';
@@ -10,11 +13,75 @@ import 'privacy_screen.dart';
 import 'login_screen.dart';
 import 'shell.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
   @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  CurrentUser? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await CurrentUser.load();
+    if (mounted) setState(() => _user = user);
+  }
+
+  void _confirmLogout(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          l10n.logOutQuestion,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+        content: Text(
+          l10n.logOutConfirmBody,
+          style: const TextStyle(fontSize: 13, color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: AppColors.muted),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await TokenStorage.clearToken();
+              if (!context.mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            child: Text(
+              l10n.logOut,
+              style: const TextStyle(
+                color: AppColors.danger,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       color: AppColors.screenBg,
       child: SafeArea(
@@ -22,9 +89,9 @@ class AccountScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Text(
-              'My Profile',
-              style: TextStyle(
+            Text(
+              l10n.myProfileTitle,
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
@@ -44,9 +111,9 @@ class AccountScreen extends StatelessWidget {
                       gradient: AppGradients.avatar,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text(
-                      'SK',
-                      style: TextStyle(
+                    child: Text(
+                      _user?.initials ?? '?',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -54,21 +121,24 @@ class AccountScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Shubham Kumar',
-                          style: TextStyle(
+                          _user?.name ?? l10n.guestName,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          '98765 43210 · shubham@example.com',
-                          style: TextStyle(
+                          [
+                            if (_user?.phone.isNotEmpty ?? false) _user!.phone,
+                            if (_user?.email.isNotEmpty ?? false) _user!.email,
+                          ].join(' · '),
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.muted,
                           ),
@@ -82,9 +152,9 @@ class AccountScreen extends StatelessWidget {
                         builder: (_) => const PersonalInfoScreen(),
                       ),
                     ),
-                    child: const Text(
-                      'Edit',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.edit,
+                      style: const TextStyle(
                         color: AppColors.blue,
                         fontWeight: FontWeight.w700,
                       ),
@@ -106,8 +176,8 @@ class AccountScreen extends StatelessWidget {
                 children: [
                   _AccountItem(
                     icon: FontAwesomeIcons.user,
-                    title: 'Personal Information',
-                    subtitle: 'Name, mobile, email, address',
+                    title: l10n.personalInformationTitle,
+                    subtitle: l10n.personalInformationSubtitle,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const PersonalInfoScreen(),
@@ -116,8 +186,8 @@ class AccountScreen extends StatelessWidget {
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.locationDot,
-                    title: 'Saved Addresses',
-                    subtitle: 'Home · Office · 2 saved',
+                    title: l10n.savedAddressesTitle,
+                    subtitle: l10n.savedAddressesSubtitle,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const SavedAddressesScreen(),
@@ -126,38 +196,36 @@ class AccountScreen extends StatelessWidget {
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.bell,
-                    title: 'Notifications',
-                    subtitle: 'Manage booking and promotional alerts',
+                    title: l10n.notificationsTitle,
+                    subtitle: l10n.notificationsSubtitle,
                     onTap: () => AppShell.goToTab(context, 3),
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.gear,
-                    title: 'Application Settings',
-                    subtitle: 'Language, preferences, security',
+                    title: l10n.applicationSettingsTitle,
+                    subtitle: l10n.applicationSettingsSubtitle,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.globe,
-                    title: 'Language',
-                    subtitle: 'English / हिन्दी',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
+                    title: l10n.languageTitle,
+                    subtitle: l10n.languageSubtitleBoth,
+                    onTap: () => showLanguagePicker(context),
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.shieldHalved,
-                    title: 'Privacy Policy',
-                    subtitle: 'Data and privacy controls',
+                    title: l10n.privacyPolicyTitle,
+                    subtitle: l10n.privacyPolicySubtitle,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const PrivacyScreen()),
                     ),
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.heart,
-                    title: 'Help & Support',
-                    subtitle: 'Chat with HelpFourU support',
+                    title: l10n.helpAndSupportTitle,
+                    subtitle: l10n.helpAndSupportSubtitle,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const HelpSupportScreen(),
@@ -166,13 +234,10 @@ class AccountScreen extends StatelessWidget {
                   ),
                   _AccountItem(
                     icon: FontAwesomeIcons.rightFromBracket,
-                    title: 'Logout',
-                    subtitle: 'Sign out of this device',
+                    title: l10n.logoutTitle,
+                    subtitle: l10n.logoutSubtitle,
                     isLast: true,
-                    onTap: () => Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
-                    ),
+                    onTap: () => _confirmLogout(context),
                   ),
                 ],
               ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../core/services/locale_controller.dart';
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import '../theme/app_theme.dart';
 
 /// Full-width gradient CTA — the prototype's `.primary`.
@@ -413,6 +416,128 @@ class LabeledField extends StatelessWidget {
           const SizedBox(height: 6),
           child,
         ],
+      ),
+    );
+  }
+}
+
+/// Shows a simple English/Hindi picker and applies the choice via the
+/// nearest [LocaleControllerScope]. Used by both the Account screen's
+/// "Language" menu item and the Settings screen's language row.
+void showLanguagePicker(BuildContext context) {
+  final controller = LocaleControllerScope.of(context);
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => _LanguagePickerDialog(controller: controller),
+  );
+}
+
+class _LanguagePickerDialog extends StatelessWidget {
+  const _LanguagePickerDialog({required this.controller});
+  final LocaleController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final options = <(Locale, String)>[
+      (const Locale('en'), l10n.englishLanguageOption),
+      (const Locale('hi'), l10n.hindiLanguageOption),
+    ];
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.selectLanguageTitle,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                      splashRadius: 20,
+                    ),
+                  ],
+                ),
+                for (final (locale, label) in options)
+                  _LanguageOptionTile(
+                    label: label,
+                    selected: controller.locale == locale,
+                    onTap: () {
+                      controller.setLocale(locale);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LanguageOptionTile extends StatelessWidget {
+  const _LanguageOptionTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Container(
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: selected ? AppColors.mintBorder : AppColors.line,
+            ),
+            color: selected ? const Color(0xFFF5FCF8) : Colors.white,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                size: 20,
+                color: selected ? AppColors.green : const Color(0xFFA3AFBD),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: selected ? AppColors.greenDark : AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

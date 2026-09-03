@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -14,25 +15,28 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   int _method = 0;
 
-  static const _methods = <(String, String)>[
-    ('UPI', 'Google Pay · PhonePe · Paytm'),
-    ('Debit / Credit Card', 'Visa · Mastercard · RuPay'),
-    ('Net Banking', 'All major Indian banks'),
+  List<(String, String)> _methods(AppLocalizations l10n) => [
+    (l10n.paymentMethodUpi, l10n.paymentMethodUpiSub),
+    (l10n.paymentMethodCard, l10n.paymentMethodCardSub),
+    (l10n.paymentMethodNetBanking, l10n.paymentMethodNetBankingSub),
   ];
 
   void _placeOrder() {
+    final l10n = AppLocalizations.of(context);
     // Pop back to the shell and land on the Orders tab, then confirm.
     Navigator.of(context).popUntil((route) => route.isFirst);
     AppShell.goToTab(context, 1);
     Future.delayed(const Duration(milliseconds: 120), () {
       if (!mounted) return;
-      showAppToast(context, 'Booking confirmed! Order #HFU10284 created.');
+      showAppToast(context, l10n.bookingConfirmedToast);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final methods = _methods(l10n);
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
@@ -40,15 +44,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const MiniHeader(title: 'Secure Payment'),
+            MiniHeader(title: l10n.securePayment),
 
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'PAYING FOR',
-                    style: TextStyle(
+                  Text(
+                    l10n.payingForLabel,
+                    style: const TextStyle(
                       fontSize: 11,
                       letterSpacing: 0.5,
                       color: AppColors.muted,
@@ -57,7 +61,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    state.sub,
+                    localizedServiceName(context, state.sub),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
@@ -65,13 +69,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Rajesh Kumar · ${state.slot}',
+                    l10n.providerWithSlot(state.slot),
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.muted,
                     ),
                   ),
-                  TotalRow(label: 'Payable', value: '₹${state.subtotal}'),
+                  TotalRow(label: l10n.payableLabel, value: '₹${state.subtotal}'),
                 ],
               ),
             ),
@@ -80,17 +84,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Payment Method',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                  Text(
+                    l10n.paymentMethod,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 4),
                   RadioGroup<int>(
                     groupValue: _method,
                     onChanged: (v) => setState(() => _method = v ?? 0),
                     child: Column(
-                      children: List.generate(_methods.length, (i) {
-                        final (title, sub) = _methods[i];
+                      children: List.generate(methods.length, (i) {
+                        final (title, sub) = methods[i];
                         return GestureDetector(
                           onTap: () => setState(() => _method = i),
                           child: Container(
@@ -154,25 +158,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
             AppCard(
               child: Column(
                 children: [
-                  DetailRow(label: 'Service amount', value: '₹${state.amount}'),
-                  DetailRow(label: 'Add-ons', value: '₹${state.addonsTotal}'),
-                  const DetailRow(
-                    label: 'Platform fee',
+                  DetailRow(label: l10n.serviceAmountLabel, value: '₹${state.amount}'),
+                  DetailRow(label: l10n.addonsLabel, value: '₹${state.addonsTotal}'),
+                  DetailRow(
+                    label: l10n.platformFeeLabel,
                     value: '₹${AppState.platformFee}',
                     showDivider: false,
                   ),
-                  TotalRow(label: 'Total', value: '₹${state.payable}'),
+                  TotalRow(label: l10n.totalLabel, value: '₹${state.payable}'),
                 ],
               ),
             ),
             const SizedBox(height: 6),
 
-            PrimaryButton(label: 'Pay & Place Order', onTap: _placeOrder),
+            PrimaryButton(label: l10n.payAndPlaceOrder, onTap: _placeOrder),
             const SizedBox(height: 12),
-            const Text(
-              '🔒 Secure payment · Refund protection · Invoice generated',
+            Text(
+              l10n.securePaymentFooter,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: AppColors.muted),
+              style: const TextStyle(fontSize: 11, color: AppColors.muted),
             ),
           ],
         ),

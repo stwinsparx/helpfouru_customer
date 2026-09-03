@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -12,12 +13,18 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
-  static const _tabs = ['All', 'Upcoming', 'Completed', 'Cancelled'];
   int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final tabs = [
+      l10n.orderTabAll,
+      l10n.orderTabUpcoming,
+      l10n.orderTabCompleted,
+      l10n.orderTabCancelled,
+    ];
 
     return Container(
       color: AppColors.screenBg,
@@ -26,11 +33,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 4),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
               child: Text(
-                'My Orders',
-                style: TextStyle(
+                l10n.myOrdersTitle,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: AppColors.ink,
@@ -42,9 +49,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: List.generate(
-                  _tabs.length,
+                  tabs.length,
                   (i) => FilterChipButton(
-                    label: _tabs[i],
+                    label: tabs[i],
                     selected: _tab == i,
                     onTap: () => setState(() => _tab = i),
                   ),
@@ -54,35 +61,37 @@ class _OrdersScreenState extends State<OrdersScreen> {
             const SizedBox(height: 14),
 
             _OrderCard(
-              title: 'AC Service · Rajesh Kumar',
-              status: 'CONFIRMED',
-              info:
-                  '#HFU10284 · Today, ${state.slot}\nHome · Udaipur · ${state.sub}',
+              title: l10n.orderAcServiceTitle,
+              status: l10n.orderStatusConfirmed,
+              info: l10n.orderAcServiceInfo(
+                state.slot,
+                localizedServiceName(context, state.sub),
+              ),
               amount: '₹${state.payable}',
-              actionLabel: 'Track Order',
+              actionLabel: l10n.trackOrder,
               onAction: () => Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const TrackingScreen())),
             ),
             _OrderCard(
-              title: 'Electrician · Amit Sharma',
-              status: 'COMPLETED',
+              title: l10n.orderElectricianTitle,
+              status: l10n.orderStatusCompleted,
               statusBg: const Color(0xFFE7F8F1),
               statusFg: AppColors.success,
-              info: '#HFU10121 · 02 Aug 2026\nSwitch & Socket Repair',
+              info: l10n.orderElectricianInfo,
               amount: '₹699',
-              actionLabel: 'View Invoice',
-              onAction: () => showAppToast(context, 'Invoice opened'),
+              actionLabel: l10n.viewInvoice,
+              onAction: () => showAppToast(context, l10n.invoiceOpenedToast),
             ),
             _OrderCard(
-              title: 'Home Cleaning · Neha Services',
-              status: 'COMPLETED',
+              title: l10n.orderCleaningTitle,
+              status: l10n.orderStatusCompleted,
               statusBg: const Color(0xFFFEF3E2),
               statusFg: AppColors.warning,
-              info: '#HFU10087 · 28 Jul 2026\n2BHK Deep Cleaning',
+              info: l10n.orderCleaningInfo,
               amount: '₹1,299',
-              actionLabel: 'Rate Service',
-              onAction: () => showAppToast(context, 'Review screen opened'),
+              actionLabel: l10n.rateService,
+              onAction: () => showAppToast(context, l10n.reviewScreenOpenedToast),
             ),
           ],
         ),
