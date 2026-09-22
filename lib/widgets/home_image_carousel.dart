@@ -42,15 +42,12 @@ class _HomeSliderSkeletonState extends State<HomeSliderSkeleton>
       children: [
         AspectRatio(
           aspectRatio: 16 / 8,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5),
-            child: FadeTransition(
-              opacity: _opacity,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDF1F5),
-                  borderRadius: BorderRadius.circular(18),
-                ),
+          child: FadeTransition(
+            opacity: _opacity,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFFEDF1F5),
+                borderRadius: BorderRadius.circular(18),
               ),
             ),
           ),
@@ -91,7 +88,7 @@ class _HomeImageCarouselState extends State<HomeImageCarousel> {
   Timer? _timer;
   int _page = 0;
 
-  static const double _viewportFraction = 0.86;
+  static const double _viewportFraction = 1;
 
   @override
   void initState() {
@@ -141,10 +138,7 @@ class _HomeImageCarouselState extends State<HomeImageCarousel> {
                   }
                   final delta = (page - i).clamp(-1.0, 1.0).abs();
                   final scale = 1 - (delta * 0.06);
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Transform.scale(scale: scale, child: child),
-                  );
+                  return Transform.scale(scale: scale, child: child);
                 },
                 child: _HomeImageCard(
                   slide: slide,
@@ -249,10 +243,7 @@ class HomeBannerCard extends StatelessWidget {
               );
             },
             errorBuilder: (context, error, stackTrace) => const Center(
-              child: Icon(
-                Icons.broken_image_outlined,
-                color: AppColors.muted,
-              ),
+              child: Icon(Icons.broken_image_outlined, color: AppColors.muted),
             ),
           ),
         ),

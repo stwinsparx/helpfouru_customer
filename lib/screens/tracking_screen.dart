@@ -1,43 +1,103 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../core/services/api_service.dart';
 import '../l10n/app_localizations.dart';
-import '../models/app_state.dart';
+import '../models/order.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
-class TrackingScreen extends StatelessWidget {
-  const TrackingScreen({super.key});
+/// Fetches and renders `GET /customer/orders/:orderId/track`.
+class TrackingScreen extends StatefulWidget {
+  const TrackingScreen({super.key, required this.orderId});
 
-  /// (title, subtitle, kind). 0 = done, 1 = current, 2 = pending. Subtitles
-  /// that are fixed clock times ("10:02 AM") stay as-is; "Pending" and the
-  /// ETA range are localized in [build] via [_stepSubtitle].
-  static const _steps = <(String, String, int)>[
-    ('Booking confirmed', '10:02 AM', 0),
-    ('Provider accepted', '10:05 AM', 0),
-    ('Provider on the way', 'ETA 12–18 min', 1),
-    ('Service started', 'Pending', 2),
-    ('Job completed', 'Pending', 2),
-  ];
+  final int orderId;
 
-  static String _stepTitle(AppLocalizations l10n, String key) => switch (key) {
-    'Booking confirmed' => l10n.stepBookingConfirmed,
-    'Provider accepted' => l10n.stepProviderAccepted,
-    'Provider on the way' => l10n.stepProviderOnTheWay,
-    'Service started' => l10n.stepServiceStarted,
-    'Job completed' => l10n.stepJobCompleted,
-    _ => key,
-  };
+  @override
+  State<TrackingScreen> createState() => _TrackingScreenState();
+}
 
-  static String _stepSubtitle(AppLocalizations l10n, String key) => switch (key) {
-    'ETA 12–18 min' => l10n.etaMinutesRange,
-    'Pending' => l10n.pendingLabel,
-    _ => key,
-  };
+class _TrackingScreenState extends State<TrackingScreen> {
+  final _apiService = ApiService();
+  bool _isLoading = true;
+  OrderTrackingResult? _result;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTracking();
+  }
+
+  Future<void> _fetchTracking() async {
+    try {
+      final response = await _apiService.get(
+        '/customer/orders/${widget.orderId}/track',
+      );
+      if (response.statusCode == 200 && response.data['is_success'] == true) {
+        setState(
+          () => _result = OrderTrackingResult.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Order tracking API error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  static FaIconData _stepIcon(TrackingStep step) => step.completed && !step.current
+      ? FontAwesomeIcons.check
+      : FontAwesomeIcons.circle;
 
   @override
   Widget build(BuildContext context) {
-    final state = AppStateScope.of(context);
     final l10n = AppLocalizations.of(context);
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.screenBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: MiniHeader(title: l10n.trackOrderTitle),
+              ),
+              const Expanded(child: Center(child: CircularProgressIndicator())),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final result = _result;
+    if (result == null) {
+      return Scaffold(
+        backgroundColor: AppColors.screenBg,
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              MiniHeader(title: l10n.trackOrderTitle),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text(
+                    l10n.orderTrackingUnavailable,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final order = result.order;
+    final provider = result.provider;
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
@@ -57,7 +117,7 @@ class TrackingScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.orderNumberLabel,
+                          '#${order.orderNumber}',
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -65,7 +125,7 @@ class TrackingScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          l10n.subWithProviderName(localizedServiceName(context, state.sub)),
+                          order.displayService,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.muted,
@@ -74,91 +134,139 @@ class TrackingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Pill(label: l10n.onTheWayBadge, fontSize: 9.5),
+                  Pill(label: order.statusLabel, fontSize: 9.5),
                 ],
               ),
             ),
 
-            // Stylised map placeholder matching the prototype's CSS art.
-            const _MapArt(),
-            const SizedBox(height: 10),
-
-            AppCard(
-              radius: 14,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.providerOnTheWay,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.etaDistance,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => showAppToast(context, l10n.callingProviderToast),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 9,
-                      ),
+            if (provider != null) ...[
+              const _MapArt(),
+              const SizedBox(height: 10),
+              AppCard(
+                radius: 14,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F7EF),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: AppGradients.providerAvatar,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
+                      clipBehavior: Clip.antiAlias,
+                      child:
+                          provider.profileImage != null &&
+                              provider.profileImage!.isNotEmpty
+                          ? Image.network(
+                              provider.profileImage!,
+                              width: 42,
+                              height: 42,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const FaIcon(
+                                    FontAwesomeIcons.userGear,
+                                    size: 16,
+                                    color: AppColors.blueDark,
+                                  ),
+                            )
+                          : const FaIcon(
+                              FontAwesomeIcons.userGear,
+                              size: 16,
+                              color: AppColors.blueDark,
+                            ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const FaIcon(
-                            FontAwesomeIcons.phone,
-                            size: 12,
-                            color: AppColors.greenDark,
-                          ),
-                          const SizedBox(width: 5),
                           Text(
-                            l10n.call,
+                            provider.name,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.greenDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            order.statusLabel,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.muted,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    if (provider.phone != null && provider.phone!.isNotEmpty)
+                      GestureDetector(
+                        onTap: () =>
+                            showAppToast(context, l10n.callingProviderToast),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE6F7EF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const FaIcon(
+                                FontAwesomeIcons.phone,
+                                size: 12,
+                                color: AppColors.greenDark,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                l10n.call,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.greenDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
+            ] else
+              const SizedBox(height: 8),
 
-            ...List.generate(_steps.length, (i) {
-              final (title, sub, kind) = _steps[i];
+            ...List.generate(result.timeline.length, (i) {
+              final step = result.timeline[i];
               return _TimelineStep(
-                title: _stepTitle(l10n, title),
-                subtitle: _stepSubtitle(l10n, sub),
-                kind: kind,
-                index: i,
-                isLast: i == _steps.length - 1,
+                title: step.label,
+                subtitle: step.timestamp != null
+                    ? _formatTimestamp(step.timestamp!)
+                    : (step.current
+                          ? l10n.inProgressLabel
+                          : l10n.pendingLabel),
+                kind: step.completed && !step.current
+                    ? 0
+                    : (step.current ? 1 : 2),
+                icon: _stepIcon(step),
+                isLast: i == result.timeline.length - 1,
               );
             }),
           ],
         ),
       ),
     );
+  }
+
+  static String _formatTimestamp(DateTime dt) {
+    final local = dt.toLocal();
+    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final minute = local.minute.toString().padLeft(2, '0');
+    final period = local.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }
 
@@ -169,6 +277,7 @@ class _MapArt extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 210,
+      margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.bottomLeft,
@@ -239,14 +348,14 @@ class _TimelineStep extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.kind,
-    required this.index,
+    required this.icon,
     required this.isLast,
   });
 
   final String title;
   final String subtitle;
   final int kind; // 0 done, 1 current, 2 pending
-  final int index;
+  final FaIconData icon;
   final bool isLast;
 
   @override
@@ -266,20 +375,11 @@ class _TimelineStep extends StatelessWidget {
                   color: active ? AppColors.mint : const Color(0xFFDCE5EC),
                   shape: BoxShape.circle,
                 ),
-                child: kind == 0
-                    ? const FaIcon(
-                        FontAwesomeIcons.check,
-                        size: 11,
-                        color: AppColors.greenDark,
-                      )
-                    : Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: active ? AppColors.greenDark : AppColors.muted,
-                        ),
-                      ),
+                child: FaIcon(
+                  icon,
+                  size: kind == 0 ? 11 : 9,
+                  color: active ? AppColors.greenDark : AppColors.muted,
+                ),
               ),
               if (!isLast)
                 Expanded(

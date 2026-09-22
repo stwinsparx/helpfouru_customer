@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav.dart';
 import 'home_screen.dart';
 import 'orders_screen.dart';
-import 'bidding_screen.dart';
+import 'my_bids_screen.dart';
 import 'notifications_screen.dart';
 import 'account_screen.dart';
 
@@ -39,7 +39,7 @@ class _AppShellState extends State<AppShell> {
         children: const [
           HomeScreen(),
           OrdersScreen(),
-          BiddingScreen(),
+          MyBidsScreen(),
           NotificationsScreen(),
           AccountScreen(),
         ],

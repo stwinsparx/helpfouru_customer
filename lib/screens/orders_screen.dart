@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../core/services/api_service.dart';
 import '../l10n/app_localizations.dart';
-import '../models/app_state.dart';
+import '../models/order.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'tracking_screen.dart';
 
+/// Fetches and renders `GET /customer/orders`.
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
 
@@ -13,11 +15,49 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
+  final _apiService = ApiService();
   int _tab = 0;
+  bool _isLoading = true;
+  List<OrderSummary> _orders = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _apiService.get('/customer/orders');
+      if (response.statusCode == 200 && response.data['is_success'] == true) {
+        final page = OrdersPage.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
+        setState(() => _orders = page.orders);
+      }
+    } catch (e) {
+      debugPrint('Orders API error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<OrderSummary> _filteredOrders() => switch (_tab) {
+    1 => _orders.where((o) => !o.isFinished).toList(),
+    2 => _orders.where((o) => o.status == 'completed').toList(),
+    3 => _orders.where((o) => o.status == 'cancelled').toList(),
+    _ => _orders,
+  };
+
+  void _trackOrder(int orderId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => TrackingScreen(orderId: orderId)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final state = AppStateScope.of(context);
     final l10n = AppLocalizations.of(context);
     final tabs = [
       l10n.orderTabAll,
@@ -25,75 +65,73 @@ class _OrdersScreenState extends State<OrdersScreen> {
       l10n.orderTabCompleted,
       l10n.orderTabCancelled,
     ];
+    final orders = _filteredOrders();
 
     return Container(
       color: AppColors.screenBg,
       child: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                l10n.myOrdersTitle,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: List.generate(
-                  tabs.length,
-                  (i) => FilterChipButton(
-                    label: tabs[i],
-                    selected: _tab == i,
-                    onTap: () => setState(() => _tab = i),
+        child: RefreshIndicator(
+          color: AppColors.green,
+          onRefresh: _fetchOrders,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  l10n.myOrdersTitle,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-
-            _OrderCard(
-              title: l10n.orderAcServiceTitle,
-              status: l10n.orderStatusConfirmed,
-              info: l10n.orderAcServiceInfo(
-                state.slot,
-                localizedServiceName(context, state.sub),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(
+                    tabs.length,
+                    (i) => FilterChipButton(
+                      label: tabs[i],
+                      selected: _tab == i,
+                      onTap: () => setState(() => _tab = i),
+                    ),
+                  ),
+                ),
               ),
-              amount: '₹${state.payable}',
-              actionLabel: l10n.trackOrder,
-              onAction: () => Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const TrackingScreen())),
-            ),
-            _OrderCard(
-              title: l10n.orderElectricianTitle,
-              status: l10n.orderStatusCompleted,
-              statusBg: const Color(0xFFE7F8F1),
-              statusFg: AppColors.success,
-              info: l10n.orderElectricianInfo,
-              amount: '₹699',
-              actionLabel: l10n.viewInvoice,
-              onAction: () => showAppToast(context, l10n.invoiceOpenedToast),
-            ),
-            _OrderCard(
-              title: l10n.orderCleaningTitle,
-              status: l10n.orderStatusCompleted,
-              statusBg: const Color(0xFFFEF3E2),
-              statusFg: AppColors.warning,
-              info: l10n.orderCleaningInfo,
-              amount: '₹1,299',
-              actionLabel: l10n.rateService,
-              onAction: () => showAppToast(context, l10n.reviewScreenOpenedToast),
-            ),
-          ],
+              const SizedBox(height: 14),
+
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (orders.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Text(
+                      l10n.noOrdersFound,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ...orders.map(
+                  (order) => _OrderCard(
+                    order: order,
+                    onTrack: () => _trackOrder(order.id),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -101,30 +139,38 @@ class _OrdersScreenState extends State<OrdersScreen> {
 }
 
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({
-    required this.title,
-    required this.status,
-    required this.info,
-    required this.amount,
-    required this.actionLabel,
-    this.onAction,
-    this.statusBg = AppColors.mint,
-    this.statusFg = AppColors.greenDark,
-  });
+  const _OrderCard({required this.order, required this.onTrack});
 
-  final String title;
-  final String status;
-  final String info;
-  final String amount;
-  final String actionLabel;
-  final VoidCallback? onAction;
-  final Color statusBg;
-  final Color statusFg;
+  final OrderSummary order;
+  final VoidCallback onTrack;
+
+  (Color, Color) _statusColors() => switch (order.status) {
+    'completed' => (const Color(0xFFE7F8F1), AppColors.success),
+    'cancelled' => (const Color(0xFFFDE9E9), AppColors.danger),
+    _ => (AppColors.mint, AppColors.greenDark),
+  };
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      radius: 16,
+    final l10n = AppLocalizations.of(context);
+    final (statusBg, statusFg) = _statusColors();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.line),
+        borderRadius: BorderRadius.circular(16),
+        // Matches the Explore Services category tiles' lifted look on Home.
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A143250),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -133,7 +179,9 @@ class _OrderCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
+                  order.displayService.isNotEmpty
+                      ? order.displayService
+                      : '#${order.orderNumber}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -142,7 +190,7 @@ class _OrderCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Pill(
-                label: status,
+                label: order.statusLabel,
                 background: statusBg,
                 foreground: statusFg,
                 fontSize: 9.5,
@@ -151,7 +199,11 @@ class _OrderCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            info,
+            [
+              '#${order.orderNumber}',
+              if (order.providerName != null) order.providerName!,
+              if (order.bookingSlot != null) order.bookingSlot!,
+            ].join(' · '),
             style: const TextStyle(
               fontSize: 12,
               color: AppColors.muted,
@@ -163,33 +215,34 @@ class _OrderCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                amount,
+                order.displayPrice,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              GestureDetector(
-                onTap: onAction,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE6F7EF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    actionLabel,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.greenDark,
+              if (!order.isFinished)
+                GestureDetector(
+                  onTap: onTrack,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE6F7EF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      l10n.trackOrder,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.greenDark,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../core/services/locale_controller.dart';
@@ -447,8 +449,13 @@ class _LanguagePickerDialog extends StatelessWidget {
       animation: controller,
       builder: (context, _) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 40,
+          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             child: Column(
@@ -562,3 +569,72 @@ InputDecoration appInputDecoration(String hint) => InputDecoration(
     borderSide: const BorderSide(color: AppColors.green, width: 1.4),
   ),
 );
+
+/// Opens a full-screen, pinch-to-zoom preview of a single image — either a
+/// hosted [imageUrl] or a not-yet-uploaded [localPath]. Exactly one of the
+/// two should be provided.
+void showImagePreview(
+  BuildContext context, {
+  String? imageUrl,
+  String? localPath,
+}) {
+  Navigator.of(context).push(
+    PageRouteBuilder(
+      opaque: false,
+      barrierColor: Colors.black,
+      pageBuilder: (context, animation, secondaryAnimation) => FadeTransition(
+        opacity: animation,
+        child: _ImagePreviewScreen(imageUrl: imageUrl, localPath: localPath),
+      ),
+    ),
+  );
+}
+
+class _ImagePreviewScreen extends StatelessWidget {
+  const _ImagePreviewScreen({this.imageUrl, this.localPath});
+  final String? imageUrl;
+  final String? localPath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: InteractiveViewer(
+              minScale: 1,
+              maxScale: 5,
+              child: Center(
+                child: imageUrl != null
+                    ? Image.network(
+                        imageUrl!,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.white54,
+                              size: 48,
+                            ),
+                      )
+                    : Image.file(File(localPath!)),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 8,
+            left: 8,
+            child: SafeArea(
+              child: Material(
+                color: Colors.transparent,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close, color: Colors.white, size: 26),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "220609586447",
+    "project_id": "helpfouru-40a53",
+    "storage_bucket": "helpfouru-40a53.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:220609586447:android:c0366a940a1442a9d10a7a",
+        "android_client_info": {
+          "package_name": "com.helpfouru.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4FmVTSVvppz2DGYEpzxDcQKgsf-9J1Do"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:220609586447:android:4bc1435e6259e627d10a7a",
+        "android_client_info": {
+          "package_name": "com.helpfouru_provider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4FmVTSVvppz2DGYEpzxDcQKgsf-9J1Do"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

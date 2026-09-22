@@ -1,178 +1,257 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../core/services/api_service.dart';
 import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
+import '../models/service_category.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/provider_card.dart';
 import 'provider_profile_screen.dart';
+import 'subcategory_screen.dart';
 import 'booking_screen.dart';
 
-/// Split layout: sub-service rail on the left, results on the right.
+/// Fetches `GET /customer/services/:categoryId/providers` for [categoryId],
+/// re-fetching with `sub_category_id`/`filter_id` set whenever either
+/// selection changes.
+///
+/// [initialFilterId] is the filter chosen up-front via the mandatory bottom
+/// sheet shown from the home screen before this screen is pushed.
+///
+/// [initialSubCategoryId], when set, means the caller already knows exactly
+/// which sub-category to land on (e.g. a Popular Services sub-category tile
+/// on Home) — this screen fetches straight into that sub-category and skips
+/// the mandatory sub-category prompt entirely, since there's nothing left to
+/// ask. When left `null` (the normal Explore Services flow), sub-category
+/// selection happens here instead: once the first fetch resolves, this
+/// screen shows its own mandatory sub-category sheet (skipped entirely if
+/// there are no sub-categories to choose from) — dismissing it without
+/// picking one pops back to Home, same "mandatory or cancel" treatment as
+/// the filter sheet. A FAB lets the user reopen the sheet afterward to
+/// change the selection, regardless of how the screen was entered.
 class ProvidersScreen extends StatefulWidget {
-  const ProvidersScreen({super.key});
+  const ProvidersScreen({
+    super.key,
+    required this.categoryId,
+    this.initialFilterId,
+    this.initialSubCategoryId,
+  });
+
+  final int categoryId;
+  final int? initialFilterId;
+  final int? initialSubCategoryId;
 
   @override
   State<ProvidersScreen> createState() => _ProvidersScreenState();
 }
 
 class _ProvidersScreenState extends State<ProvidersScreen> {
-  static const _railIcons = <FaIconData>[
-    FontAwesomeIcons.snowflake,
-    FontAwesomeIcons.screwdriverWrench,
-    FontAwesomeIcons.gear,
-    FontAwesomeIcons.wandMagicSparkles,
-    FontAwesomeIcons.plug,
-  ];
-  int _filter = 0;
+  final ApiService _apiService = ApiService();
+  bool _isLoading = true;
+  List<ServiceSubCategory> _subCategories = [];
+  List<ServiceFilter> _serviceFilters = [];
+  List<ProviderListing> _providers = [];
+  int? _selectedSubCategoryId;
+  int? _selectedFilterId;
 
-  /// (name, canonical role key, rating, price, distance). The role key is
-  /// resolved to a localized label in [build] via [_roleLabel].
-  static const _results = <(String, String, String, String, String)>[
-    ('Rajesh Kumar', 'AC Repair', '4.9', '₹499', '2.1 km'),
-    ('Vikas Meena', 'Home Service Expert', '4.8', '₹449', '2.8 km'),
-    ('Deepak Joshi', 'Certified Technician', '4.7', '₹399', '3.4 km'),
-    ('Mohit Jain', 'AC & Appliance Pro', '4.9', '₹599', '4.1 km'),
-  ];
+  /// Set once the initial fetch resolves, so the mandatory sub-category
+  /// sheet is only ever auto-shown the first time — subsequent re-fetches
+  /// (from picking a filter, or from the FAB) must not re-trigger it. Also
+  /// pre-set to true when [ProvidersScreen.initialSubCategoryId] is given,
+  /// since the caller already resolved sub-category selection for us.
+  late bool _hasPromptedSubCategory = widget.initialSubCategoryId != null;
 
-  String _roleLabel(BuildContext context, String key) {
-    final l10n = AppLocalizations.of(context);
-    return switch (key) {
-      'Home Service Expert' => l10n.roleHomeServiceExpert,
-      'Certified Technician' => l10n.roleCertifiedTechnician,
-      'AC & Appliance Pro' => l10n.roleAcAppliancePro,
-      _ => localizedServiceName(context, key),
-    };
+  @override
+  void initState() {
+    super.initState();
+    _selectedFilterId = widget.initialFilterId;
+    _selectedSubCategoryId = widget.initialSubCategoryId;
+    _fetchProviders(
+      subCategoryId: _selectedSubCategoryId,
+      filterId: _selectedFilterId,
+    );
+  }
+
+  Future<void> _fetchProviders({int? subCategoryId, int? filterId}) async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _apiService.get(
+        '/customer/services/${widget.categoryId}/providers',
+        queryParameters: {
+          'sub_category_id': ?subCategoryId,
+          'filter_id': ?filterId,
+        },
+      );
+      if (response.statusCode == 200 && response.data['is_success'] == true) {
+        final result = ProvidersResult.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
+        setState(() {
+          _subCategories = result.subCategories;
+          _serviceFilters = result.serviceFilters;
+          _providers = result.providers;
+        });
+      }
+    } catch (e) {
+      debugPrint('Providers API error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+    if (!_hasPromptedSubCategory) {
+      _hasPromptedSubCategory = true;
+      _promptSubCategoryIfNeeded();
+    }
+  }
+
+  /// Shows the mandatory sub-category page once, right after the first
+  /// fetch resolves — skipped entirely when there are no sub-categories to
+  /// pick from. Backing out without choosing one pops this whole screen
+  /// back to Home, matching the filter sheet's "mandatory or cancel"
+  /// behaviour.
+  Future<void> _promptSubCategoryIfNeeded() async {
+    if (_subCategories.isEmpty) return;
+    if (!mounted) return;
+    final subCategory = await Navigator.of(context).push<ServiceSubCategory>(
+      MaterialPageRoute(
+        builder: (_) => SubCategoryScreen(subCategories: _subCategories),
+      ),
+    );
+    if (!mounted) return;
+    if (subCategory == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    _applySubCategory(subCategory);
+  }
+
+  void _applySubCategory(ServiceSubCategory subCategory) {
+    AppStateScope.of(
+      context,
+    ).selectSub(subCategory.id, subCategory.categoryName);
+    setState(() => _selectedSubCategoryId = subCategory.id);
+    _fetchProviders(subCategoryId: subCategory.id, filterId: _selectedFilterId);
+  }
+
+  Future<void> _changeSubCategory() async {
+    if (_subCategories.isEmpty) return;
+    final subCategory = await Navigator.of(context).push<ServiceSubCategory>(
+      MaterialPageRoute(
+        builder: (_) => SubCategoryScreen(subCategories: _subCategories),
+      ),
+    );
+    if (subCategory == null) return; // keep current selection
+    _applySubCategory(subCategory);
+  }
+
+  void _selectFilter(ServiceFilter? filter) {
+    setState(() => _selectedFilterId = filter?.id);
+    _fetchProviders(
+      subCategoryId: _selectedSubCategoryId,
+      filterId: filter?.id,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
-    final subs = state.subServices;
     final l10n = AppLocalizations.of(context);
-    final filters = [
-      l10n.filterRecommended,
-      l10n.filterNearest,
-      l10n.filterTopRated,
-      l10n.filterPrice,
-    ];
 
     return Scaffold(
       backgroundColor: AppColors.screenBg,
-      body: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Left rail of sub-services.
-            Container(
-              width: 88,
-              height: double.infinity,
-              decoration: const BoxDecoration(
+      floatingActionButton: _subCategories.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _changeSubCategory,
+              backgroundColor: AppColors.green,
+              icon: const FaIcon(
+                FontAwesomeIcons.filter,
+                size: 14,
                 color: Colors.white,
-                border: Border(right: BorderSide(color: AppColors.line)),
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 7,
+              label: Text(
+                state.subCategoryName ?? l10n.selectSubCategoryTitle,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
                 ),
-                itemCount: subs.length,
-                itemBuilder: (_, i) {
-                  final key = subs[i];
-                  final active = state.sub == key;
-                  return GestureDetector(
-                    onTap: () => state.selectSub(key),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: active ? AppColors.mint : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        children: [
-                          FaIcon(
-                            _railIcons[i % _railIcons.length],
-                            size: 16,
-                            color: active
-                                ? AppColors.greenDark
-                                : const Color(0xFF68798D),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            localizedServiceName(context, key),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              height: 1.25,
-                              fontWeight: active
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                              color: active
-                                  ? AppColors.greenDark
-                                  : const Color(0xFF68798D),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
-
-            // Results column.
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                children: [
-                  MiniHeader(
-                    title: localizedServiceName(context, state.category),
-                    subtitle: l10n.providersNearbyCount(
-                      localizedServiceName(context, state.sub),
-                      18,
-                    ),
-                    onBack: () => Navigator.of(context).pop(),
-                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List.generate(
-                        filters.length,
-                        (i) => FilterChipButton(
-                          label: filters[i],
-                          selected: _filter == i,
-                          onTap: () => setState(() => _filter = i),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ..._results.map(
-                    (r) => ProviderCard(
-                      name: r.$1,
-                      role: _roleLabel(context, r.$2),
-                      rating: r.$3,
-                      price: r.$4,
-                      distance: r.$5,
-                      onViewProfile: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ProviderProfileScreen(),
-                        ),
-                      ),
-                      onBook: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const BookingScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+          children: [
+            MiniHeader(
+              title: state.categoryName ?? '',
+              subtitle: state.subCategoryName != null
+                  ? l10n.providersNearbyCount(
+                      state.subCategoryName!,
+                      _providers.length,
+                    )
+                  : l10n.providersCount(_providers.length),
+              onBack: () => Navigator.of(context).pop(),
             ),
+            if (_serviceFilters.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    FilterChipButton(
+                      label: l10n.filterAll,
+                      selected: _selectedFilterId == null,
+                      onTap: () => _selectFilter(null),
+                    ),
+                    for (final filter in _serviceFilters)
+                      FilterChipButton(
+                        label: filter.name,
+                        selected: _selectedFilterId == filter.id,
+                        onTap: () => _selectFilter(filter),
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_providers.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text(
+                    l10n.noProvidersFound,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ),
+              )
+            else
+              ..._providers.map(
+                (p) => ProviderCard(
+                  name: p.name,
+                  role: p.serviceSubCategoryName ?? p.serviceCategoryName ?? '',
+                  rating: p.rating.toString(),
+                  price: p.displayPrice ?? '',
+                  profileImage: p.profileImage,
+                  isVerified: p.isVerifiedProvider,
+                  jobs: l10n.jobsCount(p.completedJobs),
+                  onViewProfile: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProviderProfileScreen(providerId: p.id),
+                    ),
+                  ),
+                  onBook: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BookingScreen(serviceId: p.serviceId),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -37,28 +37,41 @@ class AppBottomNav extends StatelessWidget {
               return Expanded(
                 child: InkWell(
                   onTap: () => onSelect(item.$1),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FaIcon(
-                        item.$2,
-                        size: 18,
-                        color: selected
-                            ? AppColors.greenDark
-                            : const Color(0xFF8A97A7),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.green : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.$3,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: selected
-                              ? AppColors.greenDark
-                              : const Color(0xFF8A97A7),
-                        ),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FaIcon(
+                            item.$2,
+                            size: 18,
+                            color: selected
+                                ? Colors.white
+                                : const Color(0xFF8A97A7),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item.$3,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: selected
+                                  ? Colors.white
+                                  : const Color(0xFF8A97A7),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               );

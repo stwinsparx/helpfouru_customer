@@ -11,8 +11,10 @@ class ProviderCard extends StatelessWidget {
     required this.role,
     required this.rating,
     required this.price,
-    required this.distance,
+    this.distance,
     this.jobs,
+    this.profileImage,
+    this.isVerified = true,
     this.onViewProfile,
     this.onBook,
   });
@@ -21,10 +23,20 @@ class ProviderCard extends StatelessWidget {
   final String role;
   final String rating;
   final String price;
-  final String distance;
+
+  /// Distance to the provider (e.g. "2.1 km"), when known. `null` omits the
+  /// "· X away" segment entirely rather than showing a dangling separator.
+  final String? distance;
 
   /// Jobs-done label; defaults to the localized "128 jobs" when omitted.
   final String? jobs;
+
+  /// Provider photo URL. `null` (or a failed load) falls back to an
+  /// initials avatar.
+  final String? profileImage;
+
+  /// Whether to show the verified checkmark badge next to the name.
+  final bool isVerified;
   final VoidCallback? onViewProfile;
   final VoidCallback? onBook;
 
@@ -56,14 +68,30 @@ class ProviderCard extends StatelessWidget {
                   gradient: AppGradients.providerAvatar,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Text(
-                  _initials,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.blueDark,
-                    fontSize: 15,
-                  ),
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: profileImage != null && profileImage!.isNotEmpty
+                    ? Image.network(
+                        profileImage!,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Text(
+                          _initials,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.blueDark,
+                            fontSize: 15,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        _initials,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.blueDark,
+                          fontSize: 15,
+                        ),
+                      ),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -83,12 +111,14 @@ class ProviderCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const FaIcon(
-                          FontAwesomeIcons.circleCheck,
-                          size: 13,
-                          color: AppColors.greenDark,
-                        ),
+                        if (isVerified) ...[
+                          const SizedBox(width: 4),
+                          const FaIcon(
+                            FontAwesomeIcons.circleCheck,
+                            size: 13,
+                            color: AppColors.greenDark,
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 3),
@@ -101,7 +131,7 @@ class ProviderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '$role · $distance away',
+                      distance != null ? '$role · $distance away' : role,
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.muted,
@@ -128,13 +158,7 @@ class ProviderCard extends StatelessWidget {
                 child: _CardButton(label: l10n.viewProfile, onTap: onViewProfile),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: _CardButton(
-                  label: l10n.bookNow,
-                  onTap: onBook,
-                  filled: true,
-                ),
-              ),
+              _CartButton(onTap: onBook, tooltip: l10n.addToCart),
             ],
           ),
         ],
@@ -144,15 +168,14 @@ class ProviderCard extends StatelessWidget {
 }
 
 class _CardButton extends StatelessWidget {
-  const _CardButton({required this.label, this.onTap, this.filled = false});
+  const _CardButton({required this.label, this.onTap});
   final String label;
   final VoidCallback? onTap;
-  final bool filled;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: filled ? const Color(0xFFE6F7EF) : Colors.white,
+      color: Colors.white,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -161,17 +184,52 @@ class _CardButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(
-              color: filled ? AppColors.mintBorder : AppColors.line,
-            ),
+            border: Border.all(color: AppColors.line),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
-              color: filled ? AppColors.greenDark : AppColors.ink,
+              color: AppColors.ink,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact square cart-icon button, replacing the old "Book Now" text
+/// button — tapping it opens Review & Schedule for this card's service.
+class _CartButton extends StatelessWidget {
+  const _CartButton({this.onTap, required this.tooltip});
+  final VoidCallback? onTap;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: const Color(0xFFE6F7EF),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.mintBorder),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const FaIcon(
+              FontAwesomeIcons.cartPlus,
+              size: 15,
+              color: AppColors.greenDark,
             ),
           ),
         ),

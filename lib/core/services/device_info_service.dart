@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// Best-effort device name and current coordinates for login telemetry.
@@ -25,6 +26,38 @@ class DeviceInfoService {
 
   /// Returns "lat,lng", or null if location is unavailable/denied.
   static Future<String?> loginCoordinates() async {
+    final position = await _currentPosition();
+    if (position == null) return null;
+    return '${position.latitude},${position.longitude}';
+  }
+
+  /// Returns a short, human-readable "locality, administrative area" string
+  /// (e.g. "Udaipur, Rajasthan") for the device's current position, or null
+  /// if location/geocoding is unavailable, denied, or fails.
+  static Future<String?> currentAddress() async {
+    try {
+      final position = await _currentPosition();
+      if (position == null) return null;
+
+      final placemarks = await Geocoding().placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isEmpty) return null;
+
+      final place = placemarks.first;
+      final parts = [
+        place.locality,
+        place.administrativeArea,
+      ].where((p) => p != null && p.isNotEmpty).toList();
+      return parts.isEmpty ? null : parts.join(', ');
+    } catch (_) {
+      // Ignored — address is best-effort.
+      return null;
+    }
+  }
+
+  static Future<Position?> _currentPosition() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return null;
@@ -38,14 +71,13 @@ class DeviceInfoService {
         return null;
       }
 
-      final position = await Geolocator.getCurrentPosition(
+      return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
         ),
       );
-      return '${position.latitude},${position.longitude}';
     } catch (_) {
-      // Ignored — coordinates are best-effort.
+      // Ignored — position is best-effort.
       return null;
     }
   }
