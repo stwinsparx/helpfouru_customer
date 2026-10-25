@@ -4,14 +4,16 @@ class StateOption {
   final int id;
   final String name;
 
-  factory StateOption.fromJson(Map<String, dynamic> json) => StateOption(
-    id: json['id'] as int,
-    name: json['state_name'] as String,
-  );
+  factory StateOption.fromJson(Map<String, dynamic> json) =>
+      StateOption(id: json['id'] as int, name: json['state_name'] as String);
 }
 
 class CityOption {
-  const CityOption({required this.id, required this.name, required this.stateId});
+  const CityOption({
+    required this.id,
+    required this.name,
+    required this.stateId,
+  });
 
   final int id;
   final String name;
@@ -30,14 +32,15 @@ class RegisterDetails {
   final List<StateOption> states;
   final List<CityOption> cities;
 
-  factory RegisterDetails.fromJson(Map<String, dynamic> json) => RegisterDetails(
-    states: (json['states'] as List<dynamic>? ?? [])
-        .map((e) => StateOption.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    cities: (json['cities'] as List<dynamic>? ?? [])
-        .map((e) => CityOption.fromJson(e as Map<String, dynamic>))
-        .toList(),
-  );
+  factory RegisterDetails.fromJson(Map<String, dynamic> json) =>
+      RegisterDetails(
+        states: (json['states'] as List<dynamic>? ?? [])
+            .map((e) => StateOption.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        cities: (json['cities'] as List<dynamic>? ?? [])
+            .map((e) => CityOption.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 
   List<CityOption> citiesForState(int stateId) =>
       cities.where((c) => c.stateId == stateId).toList();

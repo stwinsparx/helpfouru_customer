@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../l10n/app_localizations.dart';
@@ -15,6 +16,8 @@ class ProviderCard extends StatelessWidget {
     this.jobs,
     this.profileImage,
     this.isVerified = true,
+    this.availabilityLabel,
+    this.isAvailableNow = false,
     this.onViewProfile,
     this.onBook,
   });
@@ -23,6 +26,15 @@ class ProviderCard extends StatelessWidget {
   final String role;
   final String rating;
   final String price;
+
+  /// "Available now" / "Next: Tomorrow 10 AM" line, when known — shown as a
+  /// small dot + label under the role line. `null` omits it entirely (e.g.
+  /// the backend hasn't started sending `next_available_at` yet).
+  final String? availabilityLabel;
+
+  /// Colors [availabilityLabel] green (vs. the muted default) when the
+  /// provider has an opening within the instant window right now.
+  final bool isAvailableNow;
 
   /// Distance to the provider (e.g. "2.1 km"), when known. `null` omits the
   /// "· X away" segment entirely rather than showing a dangling separator.
@@ -70,12 +82,12 @@ class ProviderCard extends StatelessWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: profileImage != null && profileImage!.isNotEmpty
-                    ? Image.network(
-                        profileImage!,
+                    ? CachedNetworkImage(
+                        imageUrl: profileImage!,
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Text(
+                        errorWidget: (context, url, error) => Text(
                           _initials,
                           style: const TextStyle(
                             fontWeight: FontWeight.w900,
@@ -137,6 +149,34 @@ class ProviderCard extends StatelessWidget {
                         color: AppColors.muted,
                       ),
                     ),
+                    if (availabilityLabel != null) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isAvailableNow
+                                  ? AppColors.green
+                                  : AppColors.muted,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            availabilityLabel!,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: isAvailableNow
+                                  ? AppColors.greenDark
+                                  : AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -155,7 +195,10 @@ class ProviderCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _CardButton(label: l10n.viewProfile, onTap: onViewProfile),
+                child: _CardButton(
+                  label: l10n.viewProfile,
+                  onTap: onViewProfile,
+                ),
               ),
               const SizedBox(width: 8),
               _CartButton(onTap: onBook, tooltip: l10n.addToCart),

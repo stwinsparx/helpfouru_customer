@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../core/services/api_service.dart';
 import '../core/services/device_info_service.dart';
@@ -11,7 +10,9 @@ import '../models/service_category.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/home_image_carousel.dart';
+import '../widgets/location_picker_sheet.dart';
 import '../widgets/service_selection_sheets.dart';
+import 'all_categories_screen.dart';
 import 'providers_screen.dart';
 import 'shell.dart';
 
@@ -35,53 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<PopularService> _popularServices = [];
   bool _isLoadingPopularServices = true;
 
-  /// Local SVG fallback icons for known category names, used only when the
-  /// API doesn't provide an `image` for that category. Matched via
-  /// substring against the lowercased `category_name`, so variants like
-  /// "AC Repair & Service" or "Home Cleaning" still resolve — see
-  /// [_localIconFor].
-  static const _localIcons = <String, String>{
-    'electric': 'assets/icons/categories/electrician.svg',
-    'plumb': 'assets/icons/categories/plumber.svg',
-    'ac repair': 'assets/icons/categories/ac_repair.svg',
-    'ac service': 'assets/icons/categories/ac_repair.svg',
-    'clean': 'assets/icons/categories/cleaning.svg',
-    'carpen': 'assets/icons/categories/carpenter.svg',
-    'paint': 'assets/icons/categories/painter.svg',
-    'car wash': 'assets/icons/categories/car_wash.svg',
-    'appliance': 'assets/icons/categories/appliance.svg',
-    'locksmith': 'assets/icons/categories/locksmith.svg',
-    'packers': 'assets/icons/categories/packers.svg',
-    'beaut': 'assets/icons/categories/beauty.svg',
-  };
-
-  static const _defaultIcon = 'assets/icons/categories/view_all.svg';
-
-  /// Finds the local SVG asset whose key is a substring of [categoryName]
-  /// (case-insensitive), falling back to [_defaultIcon] when nothing
-  /// matches — so near-miss category names from the API (e.g. "AC Repair &
-  /// Service", "Home Cleaning") still get a category-specific icon instead
-  /// of the generic placeholder.
-  static String _localIconFor(String categoryName) {
-    final name = categoryName.toLowerCase();
-    for (final entry in _localIcons.entries) {
-      if (name.contains(entry.key)) return entry.value;
-    }
-    return _defaultIcon;
-  }
-
-  /// Pastel tint backgrounds cycled across the Explore Services tiles.
-  static const _tintPalette = [
-    Color(0xFFE3F6E9),
-    Color(0xFFFFF3D6),
-    Color(0xFFDDEEFB),
-    Color(0xFFFCE4E4),
-    Color(0xFFE1EEFC),
-    Color(0xFFFCE6F0),
-    Color(0xFFEAE3FB),
-    Color(0xFFE1F5EA),
-  ];
-
   /// How many category tiles to show before collapsing the rest behind a
   /// "More Services" tile.
   static const _maxVisibleCategories = 7;
@@ -94,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchPopularServices();
     _loadCurrentUser();
     _loadCurrentAddress();
+    _fetchSavedAddresses();
   }
 
   /// Reloads every dashboard data source in parallel — bound to the pull-to-
@@ -105,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchPopularServices(),
     _loadCurrentUser(),
     _loadCurrentAddress(),
+    _fetchSavedAddresses(),
   ]);
 
   Future<void> _loadCurrentUser() async {
@@ -115,6 +71,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadCurrentAddress() async {
     final address = await DeviceInfoService.currentAddress();
     if (mounted) setState(() => _currentAddress = address);
+  }
+
+  /// Populates `AppState.addresses` from `GET /addresses` so the location
+  /// picker sheet (and anything else reading the address book) has real
+  /// data as soon as Home loads, not just after visiting Saved Addresses.
+  Future<void> _fetchSavedAddresses() async {
+    try {
+      final response = await _apiService.get('/addresses');
+      if (response.statusCode == 200 && response.data['is_success'] == true) {
+        final data = response.data['data'];
+        final rows = (data is Map ? data['addresses'] : data) as List<dynamic>;
+        final addresses = rows
+            .map((e) => SavedAddress.fromJson(e as Map<String, dynamic>))
+            .toList();
+        if (mounted) AppStateScope.of(context).setAddresses(addresses);
+      }
+    } catch (e) {
+      debugPrint('Addresses API error: $e');
+    }
   }
 
   Future<void> _fetchHomeData() async {
@@ -274,6 +249,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final state = AppStateScope.of(context);
+    final selectedAddress = state.selectedAddress;
+    // A saved address picked from the location sheet overrides the live
+    // GPS address; otherwise this falls back to the device location exactly
+    // as before (the Blinkit-style default).
+    final displayAddress = selectedAddress != null
+        ? selectedAddress.line.replaceAll('\n', ' ')
+        : _currentAddress;
     return Container(
       color: AppColors.homeBg,
       child: RefreshIndicator(
@@ -284,10 +267,11 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _Header(
               user: _currentUser,
-              address: _currentAddress,
+              address: displayAddress,
               sliders: _homeData?.homeSliders ?? const [],
               isLoadingSliders: _isLoading,
               onTapSearch: () => _openProviders(context),
+              onTapLocation: () => showLocationPickerSheet(context),
             ),
             const SizedBox(height: 20),
 
@@ -381,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                           itemBuilder: (_, i) {
                             if (showMoreTile && i == visibleCount) {
-                              return _CategoryTile(
+                              return CategoryTile(
                                 label: l10n.moreServices,
                                 tint: const Color(0xFFEFF2F6),
                                 iconWidget: const Icon(
@@ -389,15 +373,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size: 20,
                                   color: AppColors.muted,
                                 ),
-                                onTap: () => _openProviders(context),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => AllCategoriesScreen(
+                                      categories: _categories,
+                                      onCategoryTap: (cat) =>
+                                          _openCategory(context, cat),
+                                    ),
+                                  ),
+                                ),
                               );
                             }
                             final cat = _categories[i];
-                            return _CategoryTile(
+                            return CategoryTile(
                               iconUrl: cat.image,
-                              localIconAsset: _localIconFor(cat.categoryName),
+                              localIconAsset: localCategoryIconFor(
+                                cat.categoryName,
+                              ),
                               label: cat.categoryName,
-                              tint: _tintPalette[i % _tintPalette.length],
+                              tint:
+                                  categoryTintPalette[i %
+                                      categoryTintPalette.length],
                               onTap: () => _openCategory(context, cat),
                             );
                           },
@@ -408,6 +404,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 14),
+
+            // ── Special offer banner ────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 17),
+              child: _homeData?.homeBanner != null
+                  ? HomeBannerCard(
+                      banner: _homeData!.homeBanner!,
+                      onTap: () =>
+                          _openHomeImage(context, _homeData!.homeBanner!),
+                    )
+                  : _SpecialOfferBanner(onTap: () => _openProviders(context)),
+            ),
+            const SizedBox(height: 20),
 
             // ── Popular Services ─────────────────────────────────────────
             if (_isLoadingPopularServices || _popularServices.isNotEmpty)
@@ -436,11 +445,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                         itemBuilder: (_, i) {
                           final service = _popularServices[i];
-                          return _CategoryTile(
+                          return CategoryTile(
                             iconUrl: service.image,
-                            localIconAsset: _localIconFor(service.categoryName),
+                            localIconAsset: localCategoryIconFor(
+                              service.categoryName,
+                            ),
                             label: service.categoryName,
-                            tint: _tintPalette[i % _tintPalette.length],
+                            tint:
+                                categoryTintPalette[i %
+                                    categoryTintPalette.length],
                             onTap: () => _openPopularService(context, service),
                           );
                         },
@@ -450,19 +463,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             if (_isLoadingPopularServices || _popularServices.isNotEmpty)
               const SizedBox(height: 14),
-
-            // ── Special offer banner ────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 17),
-              child: _homeData?.homeBanner != null
-                  ? HomeBannerCard(
-                      banner: _homeData!.homeBanner!,
-                      onTap: () =>
-                          _openHomeImage(context, _homeData!.homeBanner!),
-                    )
-                  : _SpecialOfferBanner(onTap: () => _openProviders(context)),
-            ),
-            const SizedBox(height: 20),
 
             // ── Why customers choose HelpFourU ──────────────────────────
             Padding(
@@ -665,6 +665,7 @@ class _Header extends StatelessWidget {
     this.sliders = const [],
     this.isLoadingSliders = false,
     this.onTapSearch,
+    this.onTapLocation,
   });
 
   final CurrentUser? user;
@@ -672,6 +673,10 @@ class _Header extends StatelessWidget {
   final List<HomeImage> sliders;
   final bool isLoadingSliders;
   final VoidCallback? onTapSearch;
+
+  /// Opens the Blinkit-style location picker (current location + saved
+  /// addresses + add new) — see `showLocationPickerSheet`.
+  final VoidCallback? onTapLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -690,47 +695,56 @@ class _Header extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 6),
                   Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.yourLocation,
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: Color(0xD9FFFFFF),
+                    child: GestureDetector(
+                      onTap: onTapLocation,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                            color: Colors.white,
                           ),
-                        ),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                address ?? l10n.locationNotAvailable,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.yourLocation,
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: Color(0xD9FFFFFF),
+                                  ),
                                 ),
-                              ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        address ?? l10n.locationNotAvailable,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   GestureDetector(
@@ -1006,89 +1020,6 @@ class _QuickAction extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({
-    this.iconUrl,
-    this.localIconAsset,
-    this.iconWidget,
-    required this.label,
-    required this.tint,
-    this.onTap,
-  });
-
-  /// Remote category photo from the API. When present, fills the tile's
-  /// circle as a cover photo instead of the small centered SVG glyph.
-  final String? iconUrl;
-  final String? localIconAsset;
-
-  /// Overrides [iconUrl]/[localIconAsset] entirely — used for the "More
-  /// Services" tile, which has no category icon to render.
-  final Widget? iconWidget;
-  final String label;
-  final Color tint;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            ClipOval(
-              child: Container(
-                width: 52,
-                height: 52,
-                alignment: Alignment.center,
-                color: tint,
-                child: _buildIcon(),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-                height: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIcon() {
-    if (iconWidget != null) return iconWidget!;
-    if (iconUrl != null && iconUrl!.isNotEmpty) {
-      return Image.network(
-        iconUrl!,
-        width: 52,
-        height: 52,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => SizedBox(
-          width: 24,
-          height: 24,
-          child: SvgPicture.asset(localIconAsset!, fit: BoxFit.contain),
-        ),
-      );
-    }
-    return SizedBox(
-      width: 24,
-      height: 24,
-      child: SvgPicture.asset(localIconAsset!, fit: BoxFit.contain),
     );
   }
 }

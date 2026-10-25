@@ -116,8 +116,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         right: -2,
                         bottom: -2,
                         child: GestureDetector(
-                          onTap: () =>
-                              showAppToast(context, l10n.photoPickerOpenedToast),
+                          onTap: () => showAppToast(
+                            context,
+                            l10n.photoPickerOpenedToast,
+                          ),
                           child: Container(
                             width: 30,
                             height: 30,
@@ -153,7 +155,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 children: [
                   Text(
                     l10n.basicDetails,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   LabeledField(

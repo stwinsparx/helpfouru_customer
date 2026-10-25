@@ -73,17 +73,20 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 _QuickHelp(
                   icon: FontAwesomeIcons.receipt,
                   label: l10n.bookingIssue,
-                  onTap: () => showAppToast(context, l10n.bookingHelpOpenedToast),
+                  onTap: () =>
+                      showAppToast(context, l10n.bookingHelpOpenedToast),
                 ),
                 _QuickHelp(
                   icon: FontAwesomeIcons.creditCard,
                   label: l10n.paymentAndRefund,
-                  onTap: () => showAppToast(context, l10n.paymentHelpOpenedToast),
+                  onTap: () =>
+                      showAppToast(context, l10n.paymentHelpOpenedToast),
                 ),
                 _QuickHelp(
                   icon: FontAwesomeIcons.userGear,
                   label: l10n.accountHelp,
-                  onTap: () => showAppToast(context, l10n.accountHelpOpenedToast),
+                  onTap: () =>
+                      showAppToast(context, l10n.accountHelpOpenedToast),
                 ),
               ],
             ),
@@ -184,13 +187,15 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     icon: FontAwesomeIcons.envelope,
                     title: l10n.emailLabelShort,
                     value: 'support@helpfouru.com',
-                    onTap: () => showAppToast(context, l10n.emailAppOpenedToast),
+                    onTap: () =>
+                        showAppToast(context, l10n.emailAppOpenedToast),
                   ),
                   _ContactRow(
                     icon: FontAwesomeIcons.phone,
                     title: l10n.tollFreeLabel,
                     value: '1800 200 4567',
-                    onTap: () => showAppToast(context, l10n.callingSupportToast),
+                    onTap: () =>
+                        showAppToast(context, l10n.callingSupportToast),
                   ),
                   _ContactRow(
                     icon: FontAwesomeIcons.clock,

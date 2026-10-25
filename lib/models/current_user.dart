@@ -3,7 +3,11 @@ import '../core/services/token_storage.dart';
 /// The signed-in customer, read from the `user` object persisted by
 /// [TokenStorage] after a successful login/onboarding.
 class CurrentUser {
-  const CurrentUser({required this.name, required this.email, required this.phone});
+  const CurrentUser({
+    required this.name,
+    required this.email,
+    required this.phone,
+  });
 
   final String name;
   final String email;

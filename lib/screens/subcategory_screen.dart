@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/service_category.dart';
@@ -98,14 +99,14 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                         ),
                       )
                     : GridView.builder(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: 8),
                         itemCount: filtered.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                              mainAxisSpacing: 14,
-                              crossAxisSpacing: 9,
-                              childAspectRatio: 0.95,
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 22,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.85,
                             ),
                         itemBuilder: (context, i) {
                           final sub = filtered[i];
@@ -151,41 +152,40 @@ class _SubCategoryTile extends StatelessWidget {
           children: [
             ClipOval(
               child: Container(
-                width: 52,
-                height: 52,
+                width: 72,
+                height: 72,
                 alignment: Alignment.center,
                 color: tint,
                 child: imageUrl != null && imageUrl!.isNotEmpty
-                    ? Image.network(
-                        imageUrl!,
-                        width: 52,
-                        height: 52,
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        width: 72,
+                        height: 72,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.category_outlined,
-                              size: 22,
-                              color: AppColors.muted,
-                            ),
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.category_outlined,
+                          size: 30,
+                          color: AppColors.muted,
+                        ),
                       )
                     : const Icon(
                         Icons.category_outlined,
-                        size: 22,
+                        size: 30,
                         color: AppColors.muted,
                       ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
             Text(
               label,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
-                height: 1.2,
+                height: 1.25,
               ),
             ),
           ],

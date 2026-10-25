@@ -89,10 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showTerms() {
-    showDialog(
-      context: context,
-      builder: (_) => const _TermsDialog(),
-    );
+    showDialog(context: context, builder: (_) => const _TermsDialog());
   }
 
   @override
@@ -166,7 +163,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: () {
                           if (_mobile.text.isEmpty) _getPhoneNumberHint();
                         },
-                        decoration: appInputDecoration(l10n.enterMobileNumberHint),
+                        decoration: appInputDecoration(
+                          l10n.enterMobileNumberHint,
+                        ),
                       ),
                     ),
                   ],
@@ -282,7 +281,10 @@ class _TermsDialog extends StatelessWidget {
                     children: [
                       Text(
                         l10n.termsIntro,
-                        style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.muted,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       for (final s in sections) ...[

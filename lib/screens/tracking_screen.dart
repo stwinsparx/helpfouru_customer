@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../core/services/api_service.dart';
@@ -46,7 +47,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     }
   }
 
-  static FaIconData _stepIcon(TrackingStep step) => step.completed && !step.current
+  static FaIconData _stepIcon(TrackingStep step) =>
+      step.completed && !step.current
       ? FontAwesomeIcons.check
       : FontAwesomeIcons.circle;
 
@@ -86,7 +88,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   child: Text(
                     l10n.orderTrackingUnavailable,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.muted,
+                    ),
                   ),
                 ),
               ),
@@ -158,12 +163,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       child:
                           provider.profileImage != null &&
                               provider.profileImage!.isNotEmpty
-                          ? Image.network(
-                              provider.profileImage!,
+                          ? CachedNetworkImage(
+                              imageUrl: provider.profileImage!,
                               width: 42,
                               height: 42,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
+                              errorWidget: (context, url, error) =>
                                   const FaIcon(
                                     FontAwesomeIcons.userGear,
                                     size: 16,
@@ -202,7 +207,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     if (provider.phone != null && provider.phone!.isNotEmpty)
                       GestureDetector(
                         onTap: () =>
-                            showAppToast(context, l10n.callingProviderToast),
+                            launchPhoneDialer(context, provider.phone!),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
@@ -245,9 +250,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 title: step.label,
                 subtitle: step.timestamp != null
                     ? _formatTimestamp(step.timestamp!)
-                    : (step.current
-                          ? l10n.inProgressLabel
-                          : l10n.pendingLabel),
+                    : (step.current ? l10n.inProgressLabel : l10n.pendingLabel),
                 kind: step.completed && !step.current
                     ? 0
                     : (step.current ? 1 : 2),

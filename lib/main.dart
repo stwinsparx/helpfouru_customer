@@ -56,6 +56,22 @@ class _HelpFourUAppState extends State<HelpFourUApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          // The app's layouts are hand-tuned to specific font sizes
+          // throughout (cards, chips, grids) — honoring the device's own
+          // text-scale setting would overflow/clip many of them, so the
+          // app always renders at a fixed scale regardless of what the
+          // user has set under their phone's display/accessibility
+          // settings. This only clamps text scaling; everything else
+          // (bold text, dark mode, reduced motion) still passes through
+          // from the platform as normal.
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
+              child: child!,
+            );
+          },
           home: const SplashScreen(),
         ),
       ),

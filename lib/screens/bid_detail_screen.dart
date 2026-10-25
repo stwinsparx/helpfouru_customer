@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../core/services/api_service.dart';
@@ -150,12 +151,12 @@ class _BidDetailScreenState extends State<BidDetailScreen> {
                 onTap: () => showImagePreview(context, imageUrl: bid.images[i]),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.network(
-                    bid.images[i],
+                  child: CachedNetworkImage(
+                    imageUrl: bid.images[i],
                     width: 240,
                     height: 160,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    errorWidget: (context, url, error) => Container(
                       width: 240,
                       height: 160,
                       color: const Color(0xFFEDF1F5),

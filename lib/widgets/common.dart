@@ -1,11 +1,150 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/services/locale_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import '../theme/app_theme.dart';
+
+/// Local SVG fallback icons for known category names, used only when the
+/// API doesn't provide an `image` for that category. Matched via substring
+/// against the lowercased `category_name`, so variants like "AC Repair &
+/// Service" or "Home Cleaning" still resolve — see [localCategoryIconFor].
+/// Shared between the Home screen's Explore Services grid and
+/// [AllCategoriesScreen]-style full category lists.
+const _localCategoryIcons = <String, String>{
+  'electric': 'assets/icons/categories/electrician.svg',
+  'plumb': 'assets/icons/categories/plumber.svg',
+  'ac repair': 'assets/icons/categories/ac_repair.svg',
+  'ac service': 'assets/icons/categories/ac_repair.svg',
+  'clean': 'assets/icons/categories/cleaning.svg',
+  'carpen': 'assets/icons/categories/carpenter.svg',
+  'paint': 'assets/icons/categories/painter.svg',
+  'car wash': 'assets/icons/categories/car_wash.svg',
+  'appliance': 'assets/icons/categories/appliance.svg',
+  'locksmith': 'assets/icons/categories/locksmith.svg',
+  'packers': 'assets/icons/categories/packers.svg',
+  'beaut': 'assets/icons/categories/beauty.svg',
+};
+
+const _defaultCategoryIcon = 'assets/icons/categories/view_all.svg';
+
+/// Finds the local SVG asset whose key is a substring of [categoryName]
+/// (case-insensitive), falling back to [_defaultCategoryIcon] when nothing
+/// matches — so near-miss category names from the API (e.g. "AC Repair &
+/// Service", "Home Cleaning") still get a category-specific icon instead of
+/// the generic placeholder.
+String localCategoryIconFor(String categoryName) {
+  final name = categoryName.toLowerCase();
+  for (final entry in _localCategoryIcons.entries) {
+    if (name.contains(entry.key)) return entry.value;
+  }
+  return _defaultCategoryIcon;
+}
+
+/// Pastel tint backgrounds cycled across category tiles — shared by the
+/// Home screen's Explore Services grid and [AllCategoriesScreen]-style
+/// full category lists.
+const categoryTintPalette = [
+  Color(0xFFE3F6E9),
+  Color(0xFFFFF3D6),
+  Color(0xFFDDEEFB),
+  Color(0xFFFCE4E4),
+  Color(0xFFE1EEFC),
+  Color(0xFFFCE6F0),
+  Color(0xFFEAE3FB),
+  Color(0xFFE1F5EA),
+];
+
+/// A single circular category glyph + label — the Explore Services tile
+/// look, reused wherever a category grid is shown.
+class CategoryTile extends StatelessWidget {
+  const CategoryTile({
+    super.key,
+    this.iconUrl,
+    this.localIconAsset,
+    this.iconWidget,
+    required this.label,
+    required this.tint,
+    this.onTap,
+  });
+
+  /// Remote category photo from the API. When present, fills the tile's
+  /// circle as a cover photo instead of the small centered SVG glyph.
+  final String? iconUrl;
+  final String? localIconAsset;
+
+  /// Overrides [iconUrl]/[localIconAsset] entirely — used for tiles with no
+  /// category icon to render (e.g. a "More Services" tile).
+  final Widget? iconWidget;
+  final String label;
+  final Color tint;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(13),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            ClipOval(
+              child: Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                color: tint,
+                child: _buildIcon(),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIcon() {
+    if (iconWidget != null) return iconWidget!;
+    if (iconUrl != null && iconUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: iconUrl!,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        errorWidget: (context, url, error) => SizedBox(
+          width: 24,
+          height: 24,
+          child: SvgPicture.asset(localIconAsset!, fit: BoxFit.contain),
+        ),
+      );
+    }
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: SvgPicture.asset(localIconAsset!, fit: BoxFit.contain),
+    );
+  }
+}
 
 /// Full-width gradient CTA — the prototype's `.primary`.
 class PrimaryButton extends StatelessWidget {
@@ -240,11 +379,16 @@ class Pill extends StatelessWidget {
     this.background = AppColors.mint,
     this.foreground = AppColors.greenDark,
     this.fontSize = 10,
+    this.icon,
   });
   final String label;
   final Color background;
   final Color foreground;
   final double fontSize;
+
+  /// Optional leading glyph — e.g. a status pill showing a small clock or
+  /// spinner icon before the label.
+  final FaIconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -254,13 +398,22 @@ class Pill extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w800,
-          color: foreground,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            FaIcon(icon, size: fontSize, color: foreground),
+            const SizedBox(width: 5),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w800,
+              color: foreground,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -371,6 +524,26 @@ class TotalRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Opens the device's dialer pre-filled with [phoneNumber] via a `tel:`
+/// deep link — used by every "Call" action (order detail, tracking) that
+/// has a real provider/support phone number to call. Shows [l10n]'s
+/// `couldNotOpenDialerToast` if the platform refuses to launch it (no
+/// dialer app, simulator, malformed number) rather than failing silently.
+Future<void> launchPhoneDialer(BuildContext context, String phoneNumber) async {
+  final l10n = AppLocalizations.of(context);
+  final uri = Uri(scheme: 'tel', path: phoneNumber);
+  try {
+    final launched = await launchUrl(uri);
+    if (!launched && context.mounted) {
+      showAppToast(context, l10n.couldNotOpenDialerToast);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      showAppToast(context, l10n.couldNotOpenDialerToast);
+    }
   }
 }
 
@@ -607,14 +780,13 @@ class _ImagePreviewScreen extends StatelessWidget {
               maxScale: 5,
               child: Center(
                 child: imageUrl != null
-                    ? Image.network(
-                        imageUrl!,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.broken_image_outlined,
-                              color: Colors.white54,
-                              size: 48,
-                            ),
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white54,
+                          size: 48,
+                        ),
                       )
                     : Image.file(File(localPath!)),
               ),

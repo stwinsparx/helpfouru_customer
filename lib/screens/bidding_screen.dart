@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -627,7 +628,7 @@ class _PhotoThumb extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (imageUrl != null)
-              Image.network(imageUrl!, fit: BoxFit.cover)
+              CachedNetworkImage(imageUrl: imageUrl!, fit: BoxFit.cover)
             else if (localPath != null)
               Image.file(File(localPath!), fit: BoxFit.cover),
             if (isUploading)

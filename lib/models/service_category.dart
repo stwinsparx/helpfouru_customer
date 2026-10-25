@@ -118,6 +118,8 @@ class ProviderListing {
     required this.rating,
     required this.totalReviews,
     required this.completedJobs,
+    this.nextAvailableAt,
+    this.distanceKm,
   });
 
   final int id;
@@ -136,7 +138,31 @@ class ProviderListing {
   final int totalReviews;
   final int completedJobs;
 
+  /// This provider's next open slot, per the `next_available_at` field on
+  /// `GET /customer/services/:categoryId/providers` — `null` if the backend
+  /// doesn't send it yet (not confirmed live as of this writing) or if the
+  /// provider has no opening in whatever lookahead window it considers.
+  /// Used to show an "Available now" / "Next: …" badge on provider cards,
+  /// and to drive the Instant filter upstream of this model.
+  final DateTime? nextAvailableAt;
+
+  /// Distance in km from the customer's location sent via the `coordinates`
+  /// request, per this row's `distance_km` — `null` if the backend doesn't
+  /// send it (e.g. an older backend, or `location_required` was true and
+  /// this list is empty anyway).
+  final num? distanceKm;
+
   bool get isVerifiedProvider => isVerified == 1;
+
+  /// True when [nextAvailableAt] is known and is within the next 30 minutes
+  /// — mirrors the "instant" window the providers list filter uses server-
+  /// side, so a provider already included in an instant-filtered response
+  /// still renders its badge consistently if re-derived client-side.
+  bool get isAvailableNow {
+    final next = nextAvailableAt;
+    if (next == null) return false;
+    return next.difference(DateTime.now()) <= const Duration(minutes: 30);
+  }
 
   /// Prefers the offer price when present, else falls back to the start
   /// price. Returns `null` when neither is available.
@@ -146,6 +172,15 @@ class ProviderListing {
     final start = serviceStartPrice;
     if (start != null && start.isNotEmpty) return formatPrice(start);
     return null;
+  }
+
+  /// "0.7 km" rounded to one decimal, or "< 1 km" for anything under 1 km —
+  /// `null` when [distanceKm] isn't known.
+  String? get displayDistance {
+    final km = distanceKm;
+    if (km == null) return null;
+    if (km < 1) return '< 1 km';
+    return '${km.toStringAsFixed(1)} km';
   }
 
   factory ProviderListing.fromJson(Map<String, dynamic> json) =>
@@ -165,6 +200,10 @@ class ProviderListing {
         rating: num.tryParse(json['rating']?.toString() ?? '') ?? 0,
         totalReviews: json['total_reviews'] as int? ?? 0,
         completedJobs: json['completed_jobs'] as int? ?? 0,
+        nextAvailableAt: DateTime.tryParse(
+          json['next_available_at'] as String? ?? '',
+        ),
+        distanceKm: num.tryParse(json['distance_km']?.toString() ?? ''),
       );
 }
 
@@ -174,11 +213,26 @@ class ProvidersResult {
     required this.subCategories,
     required this.serviceFilters,
     required this.providers,
+    this.locationRequired = false,
+    this.radiusKm,
   });
 
   final List<ServiceSubCategory> subCategories;
   final List<ServiceFilter> serviceFilters;
   final List<ProviderListing> providers;
+
+  /// True when the backend couldn't resolve a usable customer location
+  /// (missing/malformed/out-of-range `coordinates`) — `providers` is empty
+  /// in this case, and the UI should prompt to enable location rather than
+  /// show a generic "no providers" message. `false` for an older backend
+  /// that doesn't send this field at all.
+  final bool locationRequired;
+
+  /// The radius (km) the backend filtered providers within, when known —
+  /// `null` for an older backend that doesn't send it. Used to word the
+  /// empty state ("No providers within {radiusKm} km of you") instead of
+  /// hardcoding 30.
+  final num? radiusKm;
 
   factory ProvidersResult.fromJson(Map<String, dynamic> json) =>
       ProvidersResult(
@@ -191,6 +245,8 @@ class ProvidersResult {
         providers: (json['providers'] as List<dynamic>? ?? [])
             .map((e) => ProviderListing.fromJson(e as Map<String, dynamic>))
             .toList(),
+        locationRequired: json['location_required'] as bool? ?? false,
+        radiusKm: num.tryParse(json['radius_km']?.toString() ?? ''),
       );
 }
 
@@ -494,4 +550,109 @@ class BookedSlots {
         .map((e) => e.toString())
         .toList(),
   );
+}
+
+/// A single bookable slot as returned by
+/// `GET /customer/slots?booking_date=&zone_id=` — admin-configured per zone,
+/// so the set of slots (and their count) varies and can change at any time;
+/// never hardcode a slot list client-side.
+class BookingSlot {
+  const BookingSlot({
+    required this.label,
+    this.startAt,
+    this.endAt,
+    required this.isPast,
+  });
+
+  /// Shown as-is and sent back verbatim as `slot` when creating an order or
+  /// sub-order — the backend matches it character for character, so this is
+  /// never reformatted or derived from [startAt]/[endAt] client-side.
+  final String label;
+
+  /// ISO UTC timestamps, used only for sorting/comparisons — [label] is
+  /// what's displayed, never a format derived from these.
+  final DateTime? startAt;
+  final DateTime? endAt;
+
+  /// True when this slot's start time has already passed — can only happen
+  /// for today's date.
+  final bool isPast;
+
+  factory BookingSlot.fromJson(Map<String, dynamic> json) => BookingSlot(
+    label: json['label'] as String? ?? '',
+    startAt: DateTime.tryParse(json['start_at'] as String? ?? ''),
+    endAt: DateTime.tryParse(json['end_at'] as String? ?? ''),
+    isPast: json['is_past'] as bool? ?? false,
+  );
+}
+
+/// Response payload of `GET /customer/slots?booking_date=&zone_id=`.
+class BookingSlotsResult {
+  const BookingSlotsResult({
+    required this.bookingDate,
+    this.zoneId,
+    required this.slots,
+  });
+
+  final String bookingDate;
+  final int? zoneId;
+
+  /// Can be empty — a zone may have no slots configured for a given date.
+  final List<BookingSlot> slots;
+
+  factory BookingSlotsResult.fromJson(Map<String, dynamic> json) =>
+      BookingSlotsResult(
+        bookingDate: json['booking_date'] as String? ?? '',
+        zoneId: json['zone_id'] as int?,
+        slots: (json['slots'] as List<dynamic>? ?? [])
+            .map((e) => BookingSlot.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+/// Response payload of `GET /customer/providers/:providerId/availability` —
+/// replaces the old client-side "Instant Booking" guesswork on
+/// `BookingScreen` with a server answer on whether this provider can be
+/// booked right now, and when their next real opening is otherwise.
+///
+/// NOTE: no confirmed backend contract yet — this endpoint doesn't exist as
+/// of this writing (see the "Instant vs Schedule API" spec). `BookingScreen`
+/// treats any failure to reach it (404, network error) as "unknown" and
+/// falls back to today's manual date/slot picking with no availability
+/// banner shown, rather than blocking the screen.
+class ProviderAvailability {
+  const ProviderAvailability({
+    required this.providerId,
+    required this.availableNow,
+    this.nextAvailableAt,
+    this.nextAvailableSlot,
+  });
+
+  final int providerId;
+
+  /// True when this provider has an opening within the "instant" window
+  /// (30 minutes from now) — see [ProviderListing.isAvailableNow] for the
+  /// same rule applied client-side to a providers-list row.
+  final bool availableNow;
+
+  /// This provider's actual next opening, regardless of [availableNow] —
+  /// `null` only when nothing is bookable in the server's lookahead window.
+  final DateTime? nextAvailableAt;
+
+  /// Same moment as [nextAvailableAt], as a slot label string. Not
+  /// guaranteed to match a [BookingSlot.label] from `GET /customer/slots`
+  /// character for character (separate, unconfirmed contracts) — callers
+  /// should re-validate it against that list before selecting it rather
+  /// than trusting it as pre-formatted/ready-to-use.
+  final String? nextAvailableSlot;
+
+  factory ProviderAvailability.fromJson(Map<String, dynamic> json) =>
+      ProviderAvailability(
+        providerId: json['provider_id'] as int? ?? 0,
+        availableNow: json['available_now'] as bool? ?? false,
+        nextAvailableAt: DateTime.tryParse(
+          json['next_available_at'] as String? ?? '',
+        ),
+        nextAvailableSlot: json['next_available_slot'] as String?,
+      );
 }

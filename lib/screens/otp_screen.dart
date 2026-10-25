@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/services.dart';
@@ -11,11 +13,7 @@ import 'save_profile_screen.dart';
 import 'shell.dart';
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({
-    super.key,
-    required this.mobile,
-    required this.countryCode,
-  });
+  const OtpScreen({super.key, required this.mobile, required this.countryCode});
 
   final String mobile;
   final String countryCode;
@@ -27,6 +25,9 @@ class OtpScreen extends StatefulWidget {
 class _OtpScreenState extends State<OtpScreen> {
   static const _otpLength = 6;
 
+  /// How long "Resend OTP" stays disabled after the OTP is (re)sent.
+  static const _resendCooldown = Duration(minutes: 3);
+
   final _apiService = ApiService();
   final _controllers = List.generate(
     _otpLength,
@@ -34,6 +35,16 @@ class _OtpScreenState extends State<OtpScreen> {
   );
   final _nodes = List.generate(_otpLength, (_) => FocusNode());
   bool _isVerifying = false;
+  bool _isResending = false;
+
+  Timer? _resendTimer;
+  Duration _remainingCooldown = _resendCooldown;
+
+  @override
+  void initState() {
+    super.initState();
+    _startResendCooldown();
+  }
 
   @override
   void dispose() {
@@ -43,7 +54,56 @@ class _OtpScreenState extends State<OtpScreen> {
     for (final n in _nodes) {
       n.dispose();
     }
+    _resendTimer?.cancel();
     super.dispose();
+  }
+
+  void _startResendCooldown() {
+    _resendTimer?.cancel();
+    setState(() => _remainingCooldown = _resendCooldown);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final next = _remainingCooldown - const Duration(seconds: 1);
+      if (next <= Duration.zero) {
+        timer.cancel();
+        setState(() => _remainingCooldown = Duration.zero);
+        return;
+      }
+      setState(() => _remainingCooldown = next);
+    });
+  }
+
+  String get _resendCooldownLabel {
+    final totalSeconds = _remainingCooldown.inSeconds;
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _resend() async {
+    if (_remainingCooldown > Duration.zero || _isResending) return;
+    setState(() => _isResending = true);
+    var isSuccess = false;
+    String? errorMessage;
+    try {
+      final response = await _apiService.post(
+        '/auth/customer/login',
+        data: {'phone': widget.mobile, 'user_type_id': 2},
+      );
+      isSuccess = response.data['is_success'] == true;
+      if (!isSuccess) errorMessage = response.data['message'] as String?;
+    } catch (e) {
+      debugPrint('Resend OTP API error: $e');
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    if (!isSuccess) {
+      showAppToast(context, errorMessage ?? l10n.somethingWentWrongTryAgain);
+      return;
+    }
+    _startResendCooldown();
+    showAppToast(context, l10n.newOtpSent);
   }
 
   Future<void> _verify() async {
@@ -75,8 +135,11 @@ class _OtpScreenState extends State<OtpScreen> {
         // The backend auto-generates a placeholder name/email for brand new
         // accounts ("User <phone>" / "<phone>@customer.helpfouru.com") — skip
         // pre-filling those so the profile form starts blank instead.
-        name = (rawName != null && !rawName.startsWith('User ')) ? rawName : null;
-        email = (rawEmail != null && !rawEmail.endsWith('@customer.helpfouru.com'))
+        name = (rawName != null && !rawName.startsWith('User '))
+            ? rawName
+            : null;
+        email =
+            (rawEmail != null && !rawEmail.endsWith('@customer.helpfouru.com'))
             ? rawEmail
             : null;
       } else {
@@ -188,7 +251,10 @@ class _OtpScreenState extends State<OtpScreen> {
                     const SizedBox(height: 5),
                     Text(
                       l10n.otpNeverShare,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF4A6B5C)),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF4A6B5C),
+                      ),
                     ),
                   ],
                 ),
@@ -199,7 +265,10 @@ class _OtpScreenState extends State<OtpScreen> {
                 children: [
                   Text(
                     l10n.wrongNumberPrefix,
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
@@ -259,17 +328,23 @@ class _OtpScreenState extends State<OtpScreen> {
                 children: [
                   Text(
                     l10n.didNotReceiveItPrefix,
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
                   ),
                   GestureDetector(
-                    onTap: () =>
-                        showAppToast(context, l10n.newOtpSent),
+                    onTap: _remainingCooldown > Duration.zero ? null : _resend,
                     child: Text(
-                      l10n.resendOtp,
-                      style: const TextStyle(
+                      _remainingCooldown > Duration.zero
+                          ? l10n.resendOtpIn(_resendCooldownLabel)
+                          : l10n.resendOtp,
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.blue,
+                        color: _remainingCooldown > Duration.zero
+                            ? AppColors.muted
+                            : AppColors.blue,
                       ),
                     ),
                   ),

@@ -32,7 +32,8 @@ class PrivacyScreen extends StatelessWidget {
             const SizedBox(height: 6),
             SecondaryButton(
               label: l10n.requestDataDeleteAccount,
-              onTap: () => showAppToast(context, l10n.privacyRequestSubmittedToast),
+              onTap: () =>
+                  showAppToast(context, l10n.privacyRequestSubmittedToast),
             ),
           ],
         ),

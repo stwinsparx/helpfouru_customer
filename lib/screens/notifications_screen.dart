@@ -4,6 +4,12 @@ import '../l10n/app_localizations.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 
+/// `AppState.platformFee` is `null` until `PaymentScreen` fetches it from
+/// `GET /customer/platform-fee` — this notice is just illustrative copy
+/// shown regardless of whether a real payment has happened yet, so it falls
+/// back to `0` rather than showing nothing when the fee hasn't loaded.
+const _fallbackPlatformFee = 0;
+
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
@@ -33,7 +39,9 @@ class NotificationsScreen extends StatelessWidget {
         icon: FontAwesomeIcons.indianRupeeSign,
         accent: AppColors.greenDark,
         title: l10n.noticePaymentSuccessTitle,
-        body: l10n.noticePaymentSuccessBody(state.amount + AppState.platformFee),
+        body: l10n.noticePaymentSuccessBody(
+          state.amount + (state.platformFee ?? _fallbackPlatformFee),
+        ),
         time: l10n.todayLabel,
         unread: false,
       ),

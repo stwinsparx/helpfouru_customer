@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../core/services/api_service.dart';
@@ -66,9 +67,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: MiniHeader(title: l10n.providerProfileTitle),
               ),
-              const Expanded(
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              const Expanded(child: Center(child: CircularProgressIndicator())),
             ],
           ),
         ),
@@ -158,20 +157,19 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       child:
                           provider.profileImage != null &&
                               provider.profileImage!.isNotEmpty
-                          ? Image.network(
-                              provider.profileImage!,
+                          ? CachedNetworkImage(
+                              imageUrl: provider.profileImage!,
                               width: 68,
                               height: 68,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Text(
-                                    _initials,
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColors.blueDark,
-                                    ),
-                                  ),
+                              errorWidget: (context, url, error) => Text(
+                                _initials,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.blueDark,
+                                ),
+                              ),
                             )
                           : Text(
                               _initials,
@@ -239,7 +237,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               children: [
                 _Stat(value: ratingText, label: l10n.ratingLabel),
                 const SizedBox(width: 8),
-                _Stat(value: '${provider.completedJobs}+', label: l10n.jobsLabel),
+                _Stat(
+                  value: '${provider.completedJobs}+',
+                  label: l10n.jobsLabel,
+                ),
                 const SizedBox(width: 8),
                 _Stat(value: experienceText, label: l10n.experienceLabel),
               ],
@@ -253,7 +254,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 children: [
                   Text(
                     l10n.aboutProvider,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -275,7 +279,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 children: [
                   Text(
                     l10n.servicesAndPricing,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   if (result.services.isEmpty)
@@ -297,9 +304,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         showDivider: i != result.services.length - 1,
                         onAddToCart: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => BookingScreen(
-                              serviceId: result.services[i].id,
-                            ),
+                            builder: (_) =>
+                                BookingScreen(serviceId: result.services[i].id),
                           ),
                         ),
                       ),

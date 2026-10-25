@@ -42,11 +42,7 @@ class RazorpayService {
       'currency': currency,
       'name': 'HelpFourU',
       'description': description,
-      'prefill': {
-        'name': ?name,
-        'email': ?email,
-        'contact': ?contact,
-      },
+      'prefill': {'name': ?name, 'email': ?email, 'contact': ?contact},
     });
   }
 

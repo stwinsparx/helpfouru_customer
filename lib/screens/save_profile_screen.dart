@@ -4,9 +4,11 @@ import '../core/services/api_service.dart';
 import '../core/services/device_info_service.dart';
 import '../core/services/token_storage.dart';
 import '../l10n/app_localizations.dart';
+import '../models/picked_location.dart';
 import '../models/register_details.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import 'location_map_picker_screen.dart';
 import 'shell.dart';
 
 /// Shown right after every successful OTP verification, so the customer's
@@ -52,6 +54,12 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
   int? _selectedStateId;
   int? _selectedCityId;
 
+  /// Set once the customer picks a location on [LocationMapPickerScreen] —
+  /// its coordinates are sent as `addressDetail.coordinates` in place of
+  /// live device GPS, since it's the exact pin they chose/searched for,
+  /// which may not be wherever the phone currently is.
+  PickedLocation? _pickedLocation;
+
   @override
   void initState() {
     super.initState();
@@ -88,13 +96,61 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _openMapPicker() async {
+    final location = await Navigator.of(context).push<PickedLocation>(
+      MaterialPageRoute(builder: (_) => const LocationMapPickerScreen()),
+    );
+    if (location == null) return;
+    setState(() {
+      _pickedLocation = location;
+      _address.text = location.formattedAddress;
+      if (location.postalCode != null) _pincode.text = location.postalCode!;
+    });
+    _autoSelectStateAndCity(location);
+  }
+
+  /// Best-effort match of the picked location's reverse-geocoded state/city
+  /// names against the backend's fixed state/city id lists — `state_id`/
+  /// `city_id` must be one of those real ids, not free text, so this only
+  /// pre-selects the dropdowns; the customer can still correct them if the
+  /// match is wrong or nothing matched.
+  void _autoSelectStateAndCity(PickedLocation location) {
+    final details = _registerDetails;
+    if (details == null) return;
+
+    final stateName = location.administrativeArea?.toLowerCase();
+    final matchedState = stateName == null
+        ? null
+        : details.states
+              .where((s) => s.name.toLowerCase() == stateName)
+              .firstOrNull;
+    if (matchedState == null) return;
+
+    final cityName = location.locality?.toLowerCase();
+    final matchedCity = cityName == null
+        ? null
+        : details
+              .citiesForState(matchedState.id)
+              .where((c) => c.name.toLowerCase() == cityName)
+              .firstOrNull;
+
+    setState(() {
+      _selectedStateId = matchedState.id;
+      _selectedCityId = matchedCity?.id;
+    });
+  }
+
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isSubmitting = true);
     var didSucceed = false;
     String? errorMessage;
     try {
-      final coordinates = await DeviceInfoService.loginCoordinates();
+      // Prefer the exact pin the customer picked/searched for on the map;
+      // only fall back to live device GPS if they never opened the picker.
+      final coordinates =
+          _pickedLocation?.coordinates ??
+          await DeviceInfoService.loginCoordinates();
       final response = await _apiService.post(
         '/auth/save-detail',
         data: {
@@ -114,9 +170,7 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
             'type_of_address': _addressType.toLowerCase(),
           },
         },
-        options: Options(
-          headers: {'Authorization': 'Bearer ${widget.token}'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer ${widget.token}'}),
       );
       didSucceed = response.data['is_success'] == true;
       if (!didSucceed) {
@@ -210,7 +264,9 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
                     validator: (v) {
                       final value = v?.trim() ?? '';
                       if (value.isEmpty) return l10n.emailRequired;
-                      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                      ).hasMatch(value)) {
                         return l10n.enterValidEmail;
                       }
                       return null;
@@ -225,10 +281,18 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
                           (entry) => FilterChipButton(
                             label: entry.value,
                             selected: _addressType == entry.key,
-                            onTap: () => setState(() => _addressType = entry.key),
+                            onTap: () =>
+                                setState(() => _addressType = entry.key),
                           ),
                         )
                         .toList(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: SecondaryButton(
+                    label: l10n.chooseOnMapButton,
+                    onTap: _openMapPicker,
                   ),
                 ),
                 LabeledField(
@@ -259,7 +323,9 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
                           initialValue: _selectedStateId,
                           isExpanded: true,
                           decoration: appInputDecoration(
-                            _isLoadingLocations ? l10n.loadingEllipsis : l10n.selectStateHint,
+                            _isLoadingLocations
+                                ? l10n.loadingEllipsis
+                                : l10n.selectStateHint,
                           ),
                           items: (_registerDetails?.states ?? const [])
                               .map(
@@ -276,7 +342,8 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
                             _selectedStateId = v;
                             _selectedCityId = null;
                           }),
-                          validator: (v) => v == null ? l10n.requiredField : null,
+                          validator: (v) =>
+                              v == null ? l10n.requiredField : null,
                         ),
                       ),
                     ),
@@ -294,8 +361,9 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
                           ),
                           items: _selectedStateId == null
                               ? const []
-                              : (_registerDetails
-                                            ?.citiesForState(_selectedStateId!) ??
+                              : (_registerDetails?.citiesForState(
+                                          _selectedStateId!,
+                                        ) ??
                                         const [])
                                     .map(
                                       (c) => DropdownMenuItem(
@@ -310,7 +378,8 @@ class _SaveProfileScreenState extends State<SaveProfileScreen> {
                           onChanged: _selectedStateId == null
                               ? null
                               : (v) => setState(() => _selectedCityId = v),
-                          validator: (v) => v == null ? l10n.requiredField : null,
+                          validator: (v) =>
+                              v == null ? l10n.requiredField : null,
                         ),
                       ),
                     ),

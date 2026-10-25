@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../models/home_data.dart';
 import '../theme/app_theme.dart';
@@ -187,22 +188,19 @@ class _HomeImageCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Image.network(
-          slide.image,
+        child: CachedNetworkImage(
+          imageUrl: slide.image,
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return const Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) => const Center(
+          placeholder: (context, url) => const Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          errorWidget: (context, url, error) => const Center(
             child: Icon(Icons.broken_image_outlined, color: AppColors.muted),
           ),
         ),
@@ -227,22 +225,19 @@ class HomeBannerCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Image.network(
-            banner.image,
+          child: CachedNetworkImage(
+            imageUrl: banner.image,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return const Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) => const Center(
+            placeholder: (context, url) => const Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            errorWidget: (context, url, error) => const Center(
               child: Icon(Icons.broken_image_outlined, color: AppColors.muted),
             ),
           ),
@@ -279,22 +274,19 @@ class HomeGalleryGrid extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap == null ? null : () => onTap!(image),
-            child: Image.network(
-              image.image,
+            child: CachedNetworkImage(
+              imageUrl: image.image,
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return const Center(
-                  child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) => const Center(
+              placeholder: (context, url) => const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (context, url, error) => const Center(
                 child: Icon(
                   Icons.broken_image_outlined,
                   color: AppColors.muted,
